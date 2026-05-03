@@ -1,0 +1,11 @@
+{
+  "name": "仓鼠 - 飞镖组零件管理",
+  "short_name": "仓鼠",
+  "description": "DIY 仓管工具，随手记随手查",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f5a623",
+  "orientation": "portrait",
+  "icons": []
+}
