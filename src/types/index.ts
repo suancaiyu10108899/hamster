@@ -18,6 +18,7 @@ export interface Location {
 export interface Part {
   id: string;
   name: string;
+  model_number: string | null;
   category_id: string | null;
   quantity: number;
   min_quantity: number | null;

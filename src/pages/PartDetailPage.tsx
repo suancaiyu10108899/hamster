@@ -162,6 +162,12 @@ export default function PartDetailPage() {
           <span style={{ color: '#888', fontSize: '13px', display: 'block' }}>分类</span>
           <span style={{ fontWeight: 600 }}>{part.category?.name || '未分类'}</span>
         </div>
+        {part.model_number && (
+          <div className="detail-row">
+            <span className="detail-label">型号 / 规格</span>
+            <span className="detail-value">{part.model_number}</span>
+          </div>
+        )}
         <div className="detail-row">
           <span className="detail-label">存放位置</span>
           <span className="detail-value">{part.location?.code || '未定位'} {part.location?.label || ''}</span>

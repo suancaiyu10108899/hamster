@@ -9,6 +9,7 @@ export default function PartFormPage() {
   const isEdit = Boolean(id);
 
   const [name, setName] = useState('');
+  const [modelNumber, setModelNumber] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [locationId, setLocationId] = useState('');
   const [quantity, setQuantity] = useState(0);
@@ -48,6 +49,7 @@ export default function PartFormPage() {
 
     if (data) {
       setName(data.name || '');
+      setModelNumber(data.model_number || '');
       setCategoryId(data.category_id || '');
       setLocationId(data.location_id || '');
       setQuantity(data.quantity || 0);
@@ -71,6 +73,7 @@ export default function PartFormPage() {
 
     const payload = {
       name: name.trim(),
+      model_number: modelNumber.trim() || null,
       category_id: categoryId || null,
       location_id: locationId || null,
       quantity,
@@ -132,6 +135,17 @@ export default function PartFormPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoFocus
+          />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">型号 / 规格</label>
+          <input
+            className="form-input"
+            type="text"
+            placeholder="如: M3×12 / FF-12 / 6204"
+            value={modelNumber}
+            onChange={(e) => setModelNumber(e.target.value)}
           />
         </div>
 

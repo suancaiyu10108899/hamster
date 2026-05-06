@@ -58,6 +58,7 @@ export default function PartsPage() {
     const s = search.toLowerCase();
     return (
       p.name.toLowerCase().includes(s) ||
+      (p.model_number && p.model_number.toLowerCase().includes(s)) ||
       p.category?.name?.toLowerCase().includes(s) ||
       (p.supplier && p.supplier.toLowerCase().includes(s)) ||
       (p.barcode && p.barcode.includes(s))
@@ -118,6 +119,7 @@ export default function PartsPage() {
             <div className="part-card-info">
               <div className="part-card-name">{part.name}</div>
               <div className="part-card-meta">
+                {part.model_number && <span>{part.model_number}</span>}
                 <span>{part.category?.name || '未分类'}</span>
                 <span>{part.location?.code || '未定位'}</span>
               </div>

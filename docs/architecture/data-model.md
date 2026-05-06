@@ -123,6 +123,7 @@ CREATE TABLE parts (
     min_quantity  INTEGER,
     unit          TEXT DEFAULT '个',
     location_id   UUID REFERENCES locations(id),
+    model_number  TEXT,                           -- 型号 / 规格
     barcode       TEXT UNIQUE,
     image_url     TEXT,
     remark        TEXT,
@@ -134,6 +135,7 @@ CREATE TABLE parts (
 CREATE INDEX idx_parts_category ON parts(category_id);
 CREATE INDEX idx_parts_location ON parts(location_id);
 CREATE INDEX idx_parts_name ON parts(name);
+CREATE INDEX idx_parts_model_number ON parts(model_number);
 CREATE INDEX idx_parts_barcode ON parts(barcode);
 CREATE INDEX idx_parts_updated ON parts(updated_at DESC);
 ```

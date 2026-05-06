@@ -91,8 +91,8 @@ export default function ImportPage() {
       // 1. 型号精确匹配（最高优先级）
       if (row.spec) {
         for (const p of allParts) {
-          if (normalize(p.remark || '').includes(normalize(row.spec)) ||
-              normalize(row.spec).includes(normalize(p.remark || ''))) {
+          if (normalize(p.model_number || '').includes(normalize(row.spec)) ||
+              normalize(row.spec).includes(normalize(p.model_number || ''))) {
             matchedPart = p;
             matchReason = `型号 "${row.spec}" 匹配到已有零件 "${p.name}"`;
             break;
@@ -119,6 +119,12 @@ export default function ImportPage() {
           if (normalize(p.name).includes(normalize(row.spec))) {
             matchedPart = p;
             matchReason = `型号 "${row.spec}" 出现在已有零件 "${p.name}" 的名称中`;
+            break;
+          }
+          if (normalize(p.model_number || '').includes(normalize(row.spec)) ||
+              normalize(row.spec).includes(normalize(p.model_number || ''))) {
+            matchedPart = p;
+            matchReason = `型号匹配: "${row.spec}" → "${p.model_number}"`;
             break;
           }
           if (normalize(row.name).includes(normalize(p.name.replace(/^[\w\d]+\s*/, '')))) {
@@ -218,12 +224,11 @@ export default function ImportPage() {
       .from('parts')
       .insert({
         name: row.name,
+        model_number: row.spec || null,
         category_id: defaultCategory || null,
         quantity: row.qty,
         unit: '个',
-        remark: [row.spec ? `型号:${row.spec}` : '', row.link || '', row.remark || '']
-          .filter(Boolean)
-          .join(' | '),
+        remark: [row.link, row.remark].filter(Boolean).join(' | ') || null,
       })
       .select()
       .single();

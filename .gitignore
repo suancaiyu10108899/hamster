@@ -40,3 +40,6 @@ docs/personal-learning/
 # Vercel
 .vercel
 .env*.local
+
+# Local Netlify folder
+.netlify

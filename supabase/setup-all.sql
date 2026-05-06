@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS locations (
 CREATE TABLE IF NOT EXISTS parts (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name          TEXT NOT NULL,
+    model_number  TEXT,
     category_id   UUID REFERENCES categories(id),
     quantity      INTEGER NOT NULL DEFAULT 0,
     min_quantity  INTEGER,
@@ -79,6 +80,7 @@ CREATE INDEX IF NOT EXISTS idx_locations_code ON locations(code);
 CREATE INDEX IF NOT EXISTS idx_parts_category ON parts(category_id);
 CREATE INDEX IF NOT EXISTS idx_parts_location ON parts(location_id);
 CREATE INDEX IF NOT EXISTS idx_parts_name ON parts(name);
+CREATE INDEX IF NOT EXISTS idx_parts_model_number ON parts(model_number);
 CREATE INDEX IF NOT EXISTS idx_parts_barcode ON parts(barcode);
 CREATE INDEX IF NOT EXISTS idx_parts_updated ON parts(updated_at DESC);
 
