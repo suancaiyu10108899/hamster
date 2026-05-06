@@ -8,7 +8,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="app">
-        <main className="main-content">
+        <main className="app-main">
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/parts" element={<PartsPage />} />

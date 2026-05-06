@@ -39,3 +39,4 @@ docs/personal-learning/
 
 # Vercel
 .vercel
+.env*.local
