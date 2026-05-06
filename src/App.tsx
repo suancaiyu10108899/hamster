@@ -4,6 +4,7 @@ import PartsPage from './pages/PartsPage';
 import PartDetailPage from './pages/PartDetailPage';
 import PartFormPage from './pages/PartFormPage';
 import SettingsPage from './pages/SettingsPage';
+import ImportPage from './pages/ImportPage';
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
             <Route path="/parts/new" element={<PartFormPage />} />
             <Route path="/parts/:id/edit" element={<PartFormPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/import" element={<ImportPage />} />
           </Routes>
         </main>
 
@@ -32,6 +34,10 @@ export default function App() {
           <a href="/parts/new" className="nav-item">
             <span className="nav-icon">➕</span>
             <span className="nav-label">新增</span>
+          </a>
+          <a href="/import" className="nav-item">
+            <span className="nav-icon">📥</span>
+            <span className="nav-label">导入</span>
           </a>
           <a href="/settings" className="nav-item">
             <span className="nav-icon">⚙️</span>
