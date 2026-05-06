@@ -15,6 +15,24 @@ export default function PartsPage() {
     loadParts();
   }, []);
 
+  // Realtime subscription: auto-refresh when anyone adds/edits/deletes a part
+  useEffect(() => {
+    const channel = supabase
+      .channel('parts-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'parts' },
+        () => {
+          loadParts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   async function loadParts() {
     const url = import.meta.env.VITE_SUPABASE_URL;
     if (!url || url === '') {
@@ -57,7 +75,7 @@ export default function PartsPage() {
         <div className="empty-state">
           <div className="empty-icon">🔌</div>
           <p>尚未配置 Supabase 连接</p>
-          <p style={{ fontSize: 13, marginTop: 8 }}>请在 Vercel 环境变量中填入<br/>VITE_SUPABASE_URL 和 VITE_SUPABASE_ANON_KEY</p>
+          <p style={{ fontSize: 13, marginTop: 8 }}>请在 Cloudflare Pages 环境变量中填入<br/>VITE_SUPABASE_URL 和 VITE_SUPABASE_ANON_KEY</p>
           <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => navigate('/')}>
             返回首页
           </button>

@@ -3,6 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import type { Part, Transaction } from '@/types';
 
+function getOperator(): string {
+  return localStorage.getItem('hamster_operator') || '我';
+}
+
 export default function PartDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -17,6 +21,32 @@ export default function PartDetailPage() {
   useEffect(() => {
     if (!id) return;
     loadPart();
+  }, [id]);
+
+  // Realtime subscription: auto-refresh transactions when anyone adds one
+  useEffect(() => {
+    if (!id) return;
+    const channel = supabase
+      .channel(`part-detail-${id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'transactions', filter: `part_id=eq.${id}` },
+        () => {
+          loadPart();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'parts', filter: `id=eq.${id}` },
+        () => {
+          loadPart();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [id]);
 
   async function loadPart() {
@@ -67,7 +97,7 @@ export default function PartDetailPage() {
       part_id: part.id,
       type,
       quantity: txQty,
-      operator: 'user',
+      operator: getOperator(),
       remark: txRemark || null,
     });
 
@@ -174,6 +204,7 @@ export default function PartDetailPage() {
               <span style={{ color: '#999', fontSize: 12 }}>
                 {new Date(tx.created_at).toLocaleDateString('zh-CN')}
               </span>
+              <span style={{ color: '#bbb', fontSize: 11 }}>{tx.operator}</span>
             </div>
           ))}
         </div>

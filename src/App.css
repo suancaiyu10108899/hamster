@@ -445,3 +445,22 @@ body {
 .stat-card.warning .stat-num {
   color: #ff6b35;
 }
+
+/* ===== 昵称徽章 ===== */
+.operator-badge {
+  font-size: 12px;
+  padding: 4px 10px;
+  background: #f0f0f0;
+  color: #666;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.operator-badge:active {
+  background: #e0e0e0;
+}
