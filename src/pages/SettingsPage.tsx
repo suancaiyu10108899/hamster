@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Category, Location } from '../types';
+import { getLocationPath } from '../lib/helpers';
 
 function getOperator(): string {
   return localStorage.getItem('hamster_operator') || '我';
@@ -137,6 +138,111 @@ export default function SettingsPage() {
     return parent ? `${parent.code} ${parent.label || ''}` : '';
   }
 
+  // 构建位置树（顶层 → 子级递归）
+  const locationTree = useMemo(() => {
+    const map = new Map<string, Location & { children: (Location & { children: any[] })[] }>();
+    const roots: (Location & { children: any[] })[] = [];
+
+    // 初始化所有节点
+    for (const loc of locations) {
+      map.set(loc.id, { ...loc, children: [] });
+    }
+
+    // 构建父子关系
+    for (const loc of locations) {
+      const node = map.get(loc.id)!;
+      if (loc.parent_id && map.has(loc.parent_id)) {
+        map.get(loc.parent_id)!.children.push(node);
+      } else {
+        roots.push(node);
+      }
+    }
+
+    return roots;
+  }, [locations]);
+
+  // 渲染树节点（递归）
+  function renderLocationNode(node: Location & { children: any[] }, depth: number = 0): JSX.Element {
+    const childParts = node.children && node.children.length > 0;
+    return (
+      <div key={node.id}>
+        <div className="settings-item" style={{ paddingLeft: 12 + depth * 20 }}>
+          <div className="settings-item-main" onClick={() => editLocation(node)}>
+            <span className="settings-item-icon">{childParts ? '📁' : '📍'}</span>
+            <div className="settings-item-info">
+              <div className="settings-item-name">{node.code}</div>
+              <div className="settings-item-meta">
+                {node.label}
+                {node.parent_id && (
+                  <span style={{ color: '#aaa' }}>
+                    {' · 路径: '}
+                    {getLocationPath(node, locations)}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <button
+            className="settings-item-delete"
+            onClick={(e) => { e.stopPropagation(); deleteLocation(node.id); }}
+            title="删除"
+          >
+            🗑️
+          </button>
+        </div>
+        {childParts && node.children.map((child: any) => renderLocationNode(child, depth + 1))}
+      </div>
+    );
+  }
+
+  // 构建分类树
+  const categoryTree = useMemo(() => {
+    const map = new Map<string, Category & { children: (Category & { children: any[] })[] }>();
+    const roots: (Category & { children: any[] })[] = [];
+
+    for (const cat of categories) {
+      map.set(cat.id, { ...cat, children: [] });
+    }
+
+    for (const cat of categories) {
+      const node = map.get(cat.id)!;
+      if (cat.parent_id && map.has(cat.parent_id)) {
+        map.get(cat.parent_id)!.children.push(node);
+      } else {
+        roots.push(node);
+      }
+    }
+
+    return roots;
+  }, [categories]);
+
+  function renderCategoryNode(node: Category & { children: any[] }, depth: number = 0): JSX.Element {
+    const hasChildren = node.children && node.children.length > 0;
+    return (
+      <div key={node.id}>
+        <div className="settings-item" style={{ paddingLeft: 12 + depth * 20 }}>
+          <div className="settings-item-main" onClick={() => editCategory(node)}>
+            <span className="settings-item-icon">{hasChildren ? '📁' : '📂'}</span>
+            <div className="settings-item-info">
+              <div className="settings-item-name">{node.name}</div>
+              {node.parent_id && (
+                <div className="settings-item-meta">父级: {parentName(node.parent_id)}</div>
+              )}
+            </div>
+          </div>
+          <button
+            className="settings-item-delete"
+            onClick={(e) => { e.stopPropagation(); deleteCategory(node.id); }}
+            title="删除"
+          >
+            🗑️
+          </button>
+        </div>
+        {hasChildren && node.children.map((child: any) => renderCategoryNode(child, depth + 1))}
+      </div>
+    );
+  }
+
   return (
     <div className="page" style={{ padding: 0 }}>
       {toast && <div className="toast">{toast}</div>}
@@ -207,26 +313,7 @@ export default function SettingsPage() {
                 <p>还没有分类</p>
               </div>
             ) : (
-              categories.map(c => (
-                <div key={c.id} className="settings-item">
-                  <div className="settings-item-main" onClick={() => editCategory(c)}>
-                    <span className="settings-item-icon">📂</span>
-                    <div className="settings-item-info">
-                      <div className="settings-item-name">{c.name}</div>
-                      {c.parent_id && (
-                        <div className="settings-item-meta">父级: {parentName(c.parent_id)}</div>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    className="settings-item-delete"
-                    onClick={(e) => { e.stopPropagation(); deleteCategory(c.id); }}
-                    title="删除"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              ))
+              categoryTree.map(node => renderCategoryNode(node))
             )}
           </div>
         </div>
@@ -283,27 +370,7 @@ export default function SettingsPage() {
                 <p>还没有位置</p>
               </div>
             ) : (
-              locations.map(l => (
-                <div key={l.id} className="settings-item">
-                  <div className="settings-item-main" onClick={() => editLocation(l)}>
-                    <span className="settings-item-icon">📍</span>
-                    <div className="settings-item-info">
-                      <div className="settings-item-name">{l.code}</div>
-                      <div className="settings-item-meta">
-                        {l.label}
-                        {l.parent_id && ` · 父级: ${parentLocationLabel(l.parent_id)}`}
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    className="settings-item-delete"
-                    onClick={(e) => { e.stopPropagation(); deleteLocation(l.id); }}
-                    title="删除"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              ))
+              locationTree.map(node => renderLocationNode(node))
             )}
           </div>
         </div>

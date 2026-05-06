@@ -4,7 +4,7 @@
 >
 > 状态：**已接受（2026-05-04）**
 >
-> 修订：2026-05-06（部署平台从 Vercel 改为 Cloudflare Pages）
+> 修订：2026-05-06（部署平台定为 Netlify）
 
 ---
 
@@ -24,7 +24,7 @@ Hamster 是一个面向 RM 战队的零件仓库管理系统，核心需求：
 
 ## 方案对比
 
-### 方案 A：Supabase + React (Vite) + Cloudflare Pages ✅ 当前方案
+### 方案 A：Supabase + React (Vite) + Netlify ✅ 当前方案
 
 | 维度 | 评估 |
 |------|------|
@@ -34,7 +34,7 @@ Hamster 是一个面向 RM 战队的零件仓库管理系统，核心需求：
 | 文件存储 | Supabase Storage（1GB 免费）用于零件照片 |
 | 认证 | Supabase Auth（Email / 匿名） |
 | 前端 | React 18 + TypeScript + Vite（无 UI 组件库，纯手写 CSS） |
-| 部署 | Cloudflare Pages（免费，无限带宽，全球 CDN） |
+| 部署 | Netlify（免费，全球 CDN，SPA 路由支持） |
 | PWA | Service Worker + manifest.json |
 | 月费 | ¥0（均在免费额度内） |
 | 学习成本 | 中等（需学 React + Supabase SDK） |
@@ -78,13 +78,13 @@ Hamster 是一个面向 RM 战队的零件仓库管理系统，核心需求：
 
 ## 决策
 
-**选择方案 A：Supabase + React (Vite) + Cloudflare Pages。**
+**选择方案 A：Supabase + React (Vite) + Netlify。**
 
 ## 理由
 
 1. **免费额度完全覆盖需求**：
    - Supabase：500MB 数据库（我们可能用不到 10MB）
-   - Cloudflare Pages：无限带宽，全球 CDN
+   - Netlify：免费包含全球 CDN、自动 HTTPS
    - 2 个用户，不需要付费
 
 2. **实时同步是核心需求，Supabase 原生支持**：
@@ -93,7 +93,7 @@ Hamster 是一个面向 RM 战队的零件仓库管理系统，核心需求：
 
 3. **零运维**：
    - 不需要服务器、树莓派、内网穿透
-   - Supabase + Cloudflare Pages 都是托管服务，自动备份、自动 HTTPS
+   - Supabase + Netlify 都是托管服务，自动备份、自动 HTTPS
 
 4. **开发效率高**：
    - 不用写后端 API（Supabase 自动生成）
@@ -116,12 +116,12 @@ Hamster 是一个面向 RM 战队的零件仓库管理系统，核心需求：
 - 学习 React（JSX、Hooks、useState/useEffect）
 - 学习 TypeScript 基础
 - 学习 Supabase SDK（`@supabase/supabase-js`）
-- 学习 Cloudflare Pages / Wrangler CLI 部署
-- 依赖外部服务（Supabase 和 Cloudflare Pages）
+- 学习 Netlify CLI 部署
+- 依赖外部服务（Supabase 和 Netlify）
 
 ### 风险与缓解
 - **风险**：Supabase 免费项目 1 周不活动会暂停
-  - 缓解：每周至少用一次，或在 Cloudflare Workers 设置 cron 保活
+  - 缓解：每周至少用一次，或在外部服务设置 cron 保活
 - **风险**：网络不可用时无法使用
   - 缓解：P1 实现 PWA 离线模式
 - **风险**：Supabase 服务中断
@@ -151,7 +151,7 @@ Hamster 是一个面向 RM 战队的零件仓库管理系统，核心需求：
 | Git | 版本控制 | 已安装 ✅ |
 | VSCode | 编辑器 | 已安装 ✅ |
 | Supabase 账号 | 后端服务 | [supabase.com](https://supabase.com) 注册（GitHub 登录） |
-| Cloudflare 账号 | 前端部署 | [dash.cloudflare.com](https://dash.cloudflare.com) 注册 |
+| Netlify 账号 | 前端部署 | [app.netlify.com](https://app.netlify.com) 注册（GitHub 登录） |
 
 ---
 
@@ -161,4 +161,4 @@ Hamster 是一个面向 RM 战队的零件仓库管理系统，核心需求：
 |------|---------|
 | 2026-05-03 | 初稿，4 方案对比，选定方案 A |
 | 2026-05-04 | 接受决策，细化风险与缓解 |
-| 2026-05-06 | 部署平台从 Vercel 改为 Cloudflare Pages（免费额度更优、全球 CDN）；去除 Vant UI，确认纯手写 CSS 方案 |
+| 2026-05-06 | 部署平台定为 Netlify（免费额度、全球 CDN、SPA 路由支持）；去除 Vant UI，确认纯手写 CSS 方案 |

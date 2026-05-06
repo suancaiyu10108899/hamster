@@ -55,3 +55,29 @@ export interface CustomField {
   sort_order: number;
   created_at: string;
 }
+
+export interface Purchase {
+  id: string;
+  purchase_date: string;
+  total_amount: number | null;
+  reimbursed: boolean;
+  paid_by: string | null;
+  purchase_intent: string | null;
+  remark: string | null;
+  operator: string;
+  created_at: string;
+  items?: PurchaseItem[];
+}
+
+export interface PurchaseItem {
+  id: string;
+  purchase_id: string;
+  part_id: string | null;
+  part_name: string;
+  quantity: number;
+  unit_price: number | null;
+  subtotal: number | null;
+  link: string | null;
+  sort_order: number;
+  created_at: string;
+}

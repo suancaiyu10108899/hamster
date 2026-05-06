@@ -94,8 +94,8 @@ return () => supabase.removeChannel(channel);
 ## 部署
 
 - 构建：`npm run build` ✅（3.08s）
-- 部署：Cloudflare Pages ✅
-- 访问地址：`https://4fead5ca.hamster-5f5.pages.dev`
+- 部署：Netlify ✅
+- 访问地址：`https://hamster-rm-parts.netlify.app`
 
 ---
 

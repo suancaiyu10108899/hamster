@@ -1,63 +1,52 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
+import type { Part, Location } from '@/types';
+import { getLocationPath } from '@/lib/helpers';
 
 function getOperator(): string {
   return localStorage.getItem('hamster_operator') || '';
 }
 
+function setOperator(val: string) {
+  localStorage.setItem('hamster_operator', val);
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
-  const [totalParts, setTotalParts] = useState<number>(0);
-  const [lowStock, setLowStock] = useState<number>(0);
+  const [parts, setParts] = useState<Part[]>([]);
+  const [allLocations, setAllLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNickname, setShowNickname] = useState(false);
   const [nickname, setNickname] = useState(getOperator());
 
-  const fetchStatsSimple = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('parts')
-        .select('quantity, min_quantity');
-
-      if (!error && data) {
-        setTotalParts(data.length);
-        setLowStock(data.filter(p => p.min_quantity !== null && p.quantity < p.min_quantity!).length);
-      }
-    } catch {
-      // ignore
-    }
-    setLoading(false);
+  useEffect(() => {
+    loadData();
   }, []);
 
-  function saveNickname() {
-    if (nickname.trim()) {
-      localStorage.setItem('hamster_operator', nickname.trim());
-      setShowNickname(false);
-    }
+  async function loadData() {
+    const [{ data: partData }, { data: locData }] = await Promise.all([
+      supabase
+        .from('parts')
+        .select('*, location:locations(code, label, parent_id)')
+        .order('name'),
+      supabase.from('locations').select('*').order('sort_order'),
+    ]);
+    if (partData) setParts(partData);
+    if (locData) setAllLocations(locData);
+    setLoading(false);
   }
 
-  useEffect(() => {
-    fetchStatsSimple();
-  }, [fetchStatsSimple]);
+  function saveNickname() {
+    setOperator(nickname.trim());
+    setShowNickname(false);
+  }
 
-  // Realtime subscription: auto-refresh stats when parts change
-  useEffect(() => {
-    const channel = supabase
-      .channel('homepage-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'parts' },
-        () => {
-          fetchStatsSimple();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchStatsSimple]);
+  const totalParts = parts.length;
+  const lowStockParts = parts.filter(
+    (p) => p.min_quantity != null && p.quantity <= p.min_quantity
+  );
+  const lowStockCount = lowStockParts.length;
 
   return (
     <div className="page">
@@ -78,12 +67,54 @@ export default function HomePage() {
           <div className="stat-label">零件总数</div>
         </div>
         <div className="stat-card warning" onClick={() => navigate('/parts')}>
-          <div className="stat-num">{loading ? '...' : lowStock}</div>
+          <div className="stat-num">{loading ? '...' : lowStockCount}</div>
           <div className="stat-label">⚠️ 库存不足</div>
         </div>
       </div>
 
+      {/* 低库存预警列表 */}
+      {!loading && lowStockParts.length > 0 && (
+        <div className="alert-section">
+          <div className="alert-header">⚠️ 库存预警 — 以下零件请及时补充</div>
+          <div className="alert-list">
+            {lowStockParts.map((p) => (
+              <div
+                key={p.id}
+                className="alert-item"
+                onClick={() => navigate(`/parts/${p.id}`)}
+              >
+                <div className="alert-item-info">
+                  <span className="alert-item-name">{p.name}</span>
+                  <span className="alert-item-location">{getLocationPath(p.location, allLocations)}</span>
+                  {p.model_number && (
+                    <span className="alert-item-model">{p.model_number}</span>
+                  )}
+                </div>
+                <div className="alert-item-qty">
+                  仅剩 <strong>{p.quantity}</strong> / 最低 {p.min_quantity}
+                </div>
+                <div className="alert-item-arrow">›</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div style={{ padding: '0 16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+          <button className="btn btn-secondary" onClick={() => navigate('/import')}>
+            📥 批量导入
+          </button>
+          <button className="btn btn-secondary" onClick={() => navigate('/purchases')}>
+            💰 采购记录
+          </button>
+          <button className="btn btn-secondary" onClick={() => navigate('/transactions')}>
+            📋 操作日志
+          </button>
+          <button className="btn btn-secondary" onClick={() => navigate('/settings')}>
+            ⚙️ 设置
+          </button>
+        </div>
         <button
           className="btn btn-primary btn-block btn-lg"
           onClick={() => navigate('/parts/new')}

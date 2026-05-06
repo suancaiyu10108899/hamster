@@ -1,4 +1,4 @@
-# 2026-05-06：修复 HomePage 实时数据 + Cloudflare Pages 部署
+# 2026-05-06：修复 HomePage 实时数据 + 首次部署
 
 ## 问题
 
@@ -22,7 +22,7 @@
 
 ## 部署
 
-使用 Cloudflare Pages 部署：
+首次使用 Cloudflare Pages 部署，后续迁移至 Netlify：
 ```bash
 npx wrangler pages deploy dist
 ```

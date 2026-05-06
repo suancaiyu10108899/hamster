@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import type { Part, Transaction } from '@/types';
+import type { Part, Transaction, Location } from '@/types';
+import { getLocationPath } from '@/lib/helpers';
 
 function getOperator(): string {
   return localStorage.getItem('hamster_operator') || '我';
@@ -11,6 +12,7 @@ export default function PartDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [part, setPart] = useState<Part | null>(null);
+  const [allLocations, setAllLocations] = useState<Location[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPanel, setShowPanel] = useState<'in' | 'out' | 'scrap' | null>(null);
@@ -21,7 +23,13 @@ export default function PartDetailPage() {
   useEffect(() => {
     if (!id) return;
     loadPart();
+    loadLocations();
   }, [id]);
+
+  async function loadLocations() {
+    const { data } = await supabase.from('locations').select('*').order('sort_order');
+    if (data) setAllLocations(data);
+  }
 
   // Realtime subscription: auto-refresh transactions when anyone adds one
   useEffect(() => {
@@ -53,7 +61,7 @@ export default function PartDetailPage() {
     setLoading(true);
     const { data: partData } = await supabase
       .from('parts')
-      .select('*, category:categories(name), location:locations(code, label)')
+      .select('*, category:categories(name), location:locations(code, label, parent_id)')
       .eq('id', id)
       .single();
 
@@ -170,7 +178,7 @@ export default function PartDetailPage() {
         )}
         <div className="detail-row">
           <span className="detail-label">存放位置</span>
-          <span className="detail-value">{part.location?.code || '未定位'} {part.location?.label || ''}</span>
+          <span className="detail-value">{getLocationPath(part.location, allLocations)}</span>
         </div>
         <div className="detail-row">
           <span className="detail-label">最低库存</span>
@@ -219,41 +227,41 @@ export default function PartDetailPage() {
 
       {/* 出入库面板 */}
       {showPanel && (
-        <div className="panel" onClick={(e) => e.target === e.currentTarget && setShowPanel(null)}>
-          <div className="panel-title">
-            {showPanel === 'in' ? '📥 入库' : showPanel === 'out' ? '📤 出库' : '🗑️ 报废'}
+        <>
+          <div className="modal-overlay" onClick={() => setShowPanel(null)} />
+          <div className="modal-sheet">
+            <h3 style={{ marginBottom: 16 }}>
+              {showPanel === 'in' ? '📥 入库' : showPanel === 'out' ? '📤 出库' : '🗑️ 报废'}
+            </h3>
+            <div className="form-group">
+              <label className="form-label">数量 ({part.unit})</label>
+              <input
+                className="form-input"
+                type="number"
+                min={1}
+                value={txQty}
+                onChange={(e) => setTxQty(parseInt(e.target.value) || 1)}
+                autoFocus
+                onKeyDown={(e) => e.key === 'Enter' && doTransaction(showPanel!)}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">备注（可选）</label>
+              <input
+                className="form-input"
+                type="text"
+                placeholder="说明用途/原因..."
+                value={txRemark}
+                onChange={(e) => setTxRemark(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && doTransaction(showPanel!)}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+              <button className="btn" style={{ flex: 1, background: '#eee', color: '#333' }} onClick={() => setShowPanel(null)}>取消</button>
+              <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => doTransaction(showPanel!)}>确认</button>
+            </div>
           </div>
-          <div className="form-group">
-            <label className="form-label">数量</label>
-            <input
-              className="form-input"
-              type="number"
-              min={1}
-              value={txQty}
-              onChange={(e) => setTxQty(parseInt(e.target.value) || 0)}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">备注（可选）</label>
-            <input
-              className="form-input"
-              type="text"
-              placeholder="如：备赛消耗、补充..."
-              value={txRemark}
-              onChange={(e) => setTxRemark(e.target.value)}
-            />
-          </div>
-          <div className="panel-actions">
-            <button className="btn" style={{ background: '#eee', color: '#333' }} onClick={() => setShowPanel(null)}>取消</button>
-            <button
-              className={`btn ${showPanel === 'in' ? 'btn-success' : showPanel === 'out' ? 'btn-danger' : ''}`}
-              style={showPanel === 'scrap' ? { background: '#999', color: '#fff' } : undefined}
-              onClick={() => doTransaction(showPanel)}
-            >
-              确认{showPanel === 'in' ? '入库' : showPanel === 'out' ? '出库' : '报废'}
-            </button>
-          </div>
-        </div>
+        </>
       )}
     </div>
   );

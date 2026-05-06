@@ -1,6 +1,5 @@
 # Hamster 项目状态
 
-> 更新日期：2026-05-06 (第二次更新)
 >
 > 用途：AI 助手上下文恢复，记录当前进度和下一步行动。
 
@@ -8,77 +7,62 @@
 
 ## 当前阶段
 
-**Phase 1：Web MVP 已完成**
+**Phase 2：队友试用与迭代（进行中）**
 
 ## 已完成
 
 - [x] 项目 README
-- [x] 产品需求文档（初稿）
-- [x] 数据模型设计（PG Schema 定义）
-- [x] 技术选型 ADR（已确认：Supabase + React + Vite + Cloudflare Pages）
-- [x] 文档目录结构
-- [x] Supabase 项目创建
-- [x] PostgreSQL 建表（5 张表：categories, locations, parts, transactions, custom_fields）
-- [x] RLS 策略配置（anon key 可读写）
-- [x] 预置分类数据（9 个：紧固件、电子元件、电机、传感器、线材、结构件、工具、耗材、其他）
+- [x] 产品需求文档
+- [x] 数据模型设计（PG Schema）
+- [x] 技术选型 ADR（Supabase + React + Vite + Netlify）
+- [x] Supabase 项目创建 + 建表 + RLS
+- [x] 预置分类数据（9 类）
 - [x] React + Vite + TypeScript 脚手架
-- [x] 首页（实时统计：零件总数、库存不足数）
-- [x] 零件列表页（搜索、分类/位置标签）
-- [x] 零件详情页（出入库操作、流水记录）
-- [x] 零件新增/编辑表单（分类、位置、厂家、条码、最低库存、备注）
-- [x] 移动端适配 UI
-- [x] TypeScript 构建通过
-- [x] Cloudflare Pages 部署
-- [x] Realtime 订阅集成（入库/出库/报废推送）
-- [x] 分类/位置管理 UI（SettingsPage，可动态增删）
-- [x] 报废操作入口（PartDetailPage 三按钮）
-- [x] TypeScript 构建通过
-- [x] Cloudflare Pages 部署更新
+- [x] HomePage（统计数据）
+- [x] PartsPage（列表、搜索、分类筛选）
+- [x] PartDetailPage（详情、出入库、报废）
+- [x] PartFormPage（新增/编辑）
+- [x] SettingsPage（分类/位置管理）
+- [x] ImportPage（CSV 导入 + 型号查重）
+- [x] Realtime 订阅（HomePage, PartsPage, PartDetailPage）
+- [x] 报废操作入口
+- [x] 型号/规格字段（model_number）
+- [x] Netlify 部署（hamster-rm-parts.netlify.app）
 
-## 本次修复（2026-05-06 会话）
+## 本次已完成（2026-05-06 第五次更新）
 
-### 第一次更新
-- 修复 HomePage 实时数据加载（从占位符 → Supabase 真实查询）
-- 修复 App.tsx CSS 类名不一致（main-content → app-main）
-- 清理 HomePage 死代码
-- 验证 Supabase Realtime 可用
-
-### 第二次更新（Phase 2 P1 功能）
-- PartsPage 新增分类标签筛选（复用 category_id 字段）
-- 详情页添加 Realtime 订阅（他人操作自动刷新）
-- 列表页添加 Realtime 订阅（新零件/库存变化自动刷新）
-- 新增 SettingsPage（分类标签、位置标签管理，支持动态增删）
-- PartDetailPage 添加「报废」操作入口
-- 修复 PartFormPage 保存后不返回列表的问题
-- 更新路线图标记已完成项
+1. 库存预警：HomePage 低库存红色提示 + 详细列表
+2. 操作日志页（TransactionsPage）：出入库报废记录、筛选、搜索、分页
+3. 采购记录页（PurchasesPage）：采购日期/金额/链接/报销状态/垫付人
+4. 采购表数据库迁移（002-add-purchases.sql）
+5. 底部导航重构：首页/零件/日志/采购/设置 5 tab
+6. 首页快捷入口网格：导入/采购/日志/设置
+7. **Bug 修复：采购记录生成 400 错误**——数据库缺列（reimbursed, paid_by, purchase_intent, part_name, link），编写诊断脚本 test_purchases.py 逐列探测，补列 SQL 执行 + PostgREST schema cache 刷新，功能恢复
+8. **部署确认**：Netlify 生产部署 hamster-rm-parts.netlify.app，前端重新构建部署成功
+9. **文档完善**：开发日志、调试日志、学习笔记（数据库 Schema 调试与 PostgREST）全部补齐
 
 ## 待完成
-- [ ] CSV 导入导出
-- [ ] 扫码功能（调用手机摄像头）
-- [ ] 图片上传（零件照片）
-- [ ] 自定义字段 EAV 支持
+
+- [ ] 队友试用反馈收集
+- [ ] 零件照片上传（Supabase Storage）
 - [ ] PWA 离线支持
-- [ ] Phase 3：Qt 桌面版开发
+- [ ] Phase 3：Qt 桌面版
+- [ ] 数据导出功能（CSV 备份）
 
 ## 关键决策记录
 
 | 决策 | 状态 | 文档 |
 |------|------|------|
-| 技术栈选型：Supabase + React + Vite + Cloudflare Pages | ✅ 已确认 | ADR 0001 |
-| 数据模型：EAV 自定义字段 | 提议中 | data-model.md |
-| 部署平台：Cloudflare Pages（替代 Vercel） | ✅ 已确认 | environment-setup.md |
-| 双轨策略：Web MVP 先行，Qt 版后续训练 | 已确认 | README.md |
-
-## 已解决风险
-
-- Supabase + Cloudflare Pages 账号已注册
-- Node.js 环境已安装
-- 数据库表 + RLS 已配置
-- .env 环境变量已配置
+| 技术栈：Supabase + React + Vite + Netlify | ✅ | ADR 0001 |
+| EAV 自定义字段 | 待实现 | data-model.md |
+| 部署平台：Netlify | ✅ | environment-setup.md |
+| 双轨策略：Web MVP 先行 | ✅ | README.md |
+| 采购记录独立表 | ✅ | 本次实现 |
+| 数据库迁移执行确认流程 | ✅ | 本次修复中建立 |
 
 ## 下次会话任务
 
-1. 用户试用反馈 → 功能迭代
-2. 集成 Supabase Realtime 订阅
-3. 批量操作功能
-4. PWA 配置
+1. 队友试用反馈收集与分析
+2. 零件照片上传（Supabase Storage）
+3. 数据导出功能（CSV 备份）
+4. PWA 离线支持调研

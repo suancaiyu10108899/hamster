@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import type { Part, Category, Location } from '@/types';
+import { getLocationPath } from '@/lib/helpers';
 
 export default function PartFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -172,7 +173,9 @@ export default function PartFormPage() {
           >
             <option value="">选择位置</option>
             {locations.map((l) => (
-              <option key={l.id} value={l.id}>{l.code} {l.label}</option>
+              <option key={l.id} value={l.id}>
+                {getLocationPath(l, locations)}
+              </option>
             ))}
           </select>
         </div>

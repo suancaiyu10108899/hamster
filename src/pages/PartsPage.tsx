@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import type { Part } from '@/types';
+import type { Part, Location } from '@/types';
+import { getLocationPath } from '@/lib/helpers';
 
 export default function PartsPage() {
   const navigate = useNavigate();
   const [parts, setParts] = useState<Part[]>([]);
+  const [allLocations, setAllLocations] = useState<Location[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -13,6 +15,7 @@ export default function PartsPage() {
 
   useEffect(() => {
     loadParts();
+    loadLocations();
   }, []);
 
   // Realtime subscription: auto-refresh when anyone adds/edits/deletes a part
@@ -43,7 +46,7 @@ export default function PartsPage() {
     setLoading(true);
     const { data, error: err } = await supabase
       .from('parts')
-      .select('*, category:categories(name), location:locations(code, label)')
+      .select('*, category:categories(name), location:locations(code, label, parent_id)')
       .order('name');
 
     if (err) {
@@ -54,14 +57,23 @@ export default function PartsPage() {
     setLoading(false);
   }
 
+  async function loadLocations() {
+    const { data } = await supabase.from('locations').select('*').order('sort_order');
+    if (data) setAllLocations(data);
+  }
+
   const filtered = parts.filter((p) => {
     const s = search.toLowerCase();
+    if (!s) return true;
+    // 跨级搜索：名称、型号、分类、厂家、条码、位置路径
+    const locPath = getLocationPath(p.location, allLocations).toLowerCase();
     return (
       p.name.toLowerCase().includes(s) ||
       (p.model_number && p.model_number.toLowerCase().includes(s)) ||
       p.category?.name?.toLowerCase().includes(s) ||
       (p.supplier && p.supplier.toLowerCase().includes(s)) ||
-      (p.barcode && p.barcode.includes(s))
+      (p.barcode && p.barcode.includes(s)) ||
+      locPath.includes(s)
     );
   });
 
@@ -97,7 +109,7 @@ export default function PartsPage() {
       <div className="search-bar">
         <input
           type="text"
-          placeholder="搜索零件名称、厂家、分类..."
+          placeholder="搜索名称、型号、厂家、分类、位置..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -121,7 +133,7 @@ export default function PartsPage() {
               <div className="part-card-meta">
                 {part.model_number && <span>{part.model_number}</span>}
                 <span>{part.category?.name || '未分类'}</span>
-                <span>{part.location?.code || '未定位'}</span>
+                <span>{getLocationPath(part.location, allLocations)}</span>
               </div>
             </div>
             <div className="part-card-qty">

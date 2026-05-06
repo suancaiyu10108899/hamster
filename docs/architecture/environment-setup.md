@@ -2,7 +2,7 @@
 
 > 创建日期：2026-05-03
 >
-> 修订日期：2026-05-06（部署平台从 Vercel 改为 Cloudflare Pages）
+> 修订日期：2026-05-06（部署平台定为 Netlify）
 >
 > 适用范围：Phase 1 Web MVP 开发
 
@@ -17,7 +17,7 @@
 | Git | 版本控制 | ✅ 已安装 |
 | VSCode | 代码编辑 | ✅ 已安装 |
 | Supabase 账号 | 后端/数据库 | ✅ 已注册并配置 |
-| Cloudflare 账号 | 前端部署 | ✅ 已注册并配置 |
+| Netlify 账号 | 前端部署 | ✅ 已注册并配置 |
 
 ---
 
@@ -82,7 +82,7 @@ npm run dev
 
 ---
 
-## 四、部署（Cloudflare Pages）
+## 四、部署（Netlify）
 
 ### 4.1 CLI 部署
 
@@ -90,27 +90,29 @@ npm run dev
 # 构建
 npm run build
 
-# 部署到 Cloudflare Pages
-npx wrangler pages deploy dist --project-name=hamster --branch=master
+# 部署到 Netlify（生产环境）
+npx netlify deploy --prod --dir=dist
 ```
 
 ### 4.2 首次配置
 
-1. 注册 [Cloudflare 账号](https://dash.cloudflare.com)
-2. 创建 API Token（My Profile → API Tokens → Create Token → Cloudflare Pages:Edit）
-3. 设置环境变量：
-   ```powershell
-   $env:CLOUDFLARE_API_TOKEN = "你的token"
-   $env:CLOUDFLARE_ACCOUNT_ID = "你的account-id"
-   ```
-4. 创建 Pages 项目：
+1. 注册 [Netlify 账号](https://app.netlify.com)（可用 GitHub 登录）
+2. 安装 Netlify CLI：
    ```bash
-   npx wrangler pages project create hamster --production-branch=master
+   npm install -g netlify-cli
    ```
+3. 登录并关联站点：
+   ```bash
+   netlify login
+   netlify init
+   ```
+4. Netlify 会自动检测 Vite 项目，无需额外配置
 
 ### 4.3 查看部署
 
-部署后 Cloudflare Pages 会提供 URL（如 `https://hamster-xxx.pages.dev`），手机浏览器打开即可使用。
+部署后 Netlify 会提供 URL（当前：`https://hamster-rm-parts.netlify.app`），手机浏览器打开即可使用。
+
+> **注意**：项目根目录的 `public/_redirects` 文件用于 Netlify 的 SPA 路由重写（`/* /index.html 200`）。
 
 ---
 
@@ -128,7 +130,7 @@ npm run dev
 npm run build
 
 # 4. 部署
-npx wrangler pages deploy dist
+npx netlify deploy --prod --dir=dist
 
 # 5. Git 提交
 git add .
@@ -141,7 +143,7 @@ git push
 ## 六、参考资源
 
 - Supabase JS 文档：https://supabase.com/docs/reference/javascript
-- Cloudflare Pages 文档：https://developers.cloudflare.com/pages/
+- Netlify 文档：https://docs.netlify.com/
 - Vite 文档：https://vitejs.dev/
 - React 文档：https://react.dev/
 - TypeScript 文档：https://www.typescriptlang.org/docs/

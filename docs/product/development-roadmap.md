@@ -49,12 +49,12 @@ Phase 0      Phase 1          Phase 2            Phase 3
 | 首页统计 | HomePage 实时查询 Supabase |
 | 手机端布局 | 响应式 CSS 手写 |
 | PWA 基础 | manifest.json |
-| Cloudflare Pages 部署 | Wrangler CLI |
+| Netlify 部署 | Netlify CLI |
 
 **技术栈**：
 - 前端：React 18 + TypeScript + Vite
 - 后端：Supabase (PostgreSQL + RLS + Realtime)
-- 部署：Cloudflare Pages
+- 部署：Netlify
 - 无 UI 组件库，纯手写 CSS
 
 **统计**：
@@ -71,7 +71,7 @@ Phase 0      Phase 1          Phase 2            Phase 3
 **步骤**：
 
 ### 第一步：让队友用起来（本周）
-- [ ] 部署到 Cloudflare Pages 公共 URL
+- [x] 部署到 Netlify 公共 URL（hamster-rm-parts.netlify.app）
 - [ ] 发链接给队友 + 简单操作说明
 - [ ] 导入 10-20 个真实零件数据（手动）
 
@@ -89,7 +89,7 @@ Phase 0      Phase 1          Phase 2            Phase 3
 | 🔴 P0 | 队友反馈的最高频痛点 | 0.5-2h | 直接改善体验 |
 | 🟠 P1 | Realtime 实时推送 | 1-2h | 一入库立刻看到 |
 | 🟠 P1 | 报废操作入口 | 30min | ✅ 已完成 |
-| 🟡 P1 | 库存预警标记 | 1h | 首页红色提醒 |
+| 🟡 P1 | 库存预警标记 | 1h | ✅ 已完成 |
 | 🟡 P1 | 分类/位置管理 UI | 2h | 可动态添加 |
 | 🟡 P1 | 零件照片上传 | 3h | Supabase Storage |
 | 🟢 P2 | 扫码（相机读取条码） | 4h | 出入库加速 |

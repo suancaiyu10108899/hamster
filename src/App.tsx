@@ -5,6 +5,8 @@ import PartDetailPage from './pages/PartDetailPage';
 import PartFormPage from './pages/PartFormPage';
 import SettingsPage from './pages/SettingsPage';
 import ImportPage from './pages/ImportPage';
+import TransactionsPage from './pages/TransactionsPage';
+import PurchasesPage from './pages/PurchasesPage';
 
 export default function App() {
   return (
@@ -19,6 +21,8 @@ export default function App() {
             <Route path="/parts/:id/edit" element={<PartFormPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/import" element={<ImportPage />} />
+            <Route path="/transactions" element={<TransactionsPage />} />
+            <Route path="/purchases" element={<PurchasesPage />} />
           </Routes>
         </main>
 
@@ -31,13 +35,13 @@ export default function App() {
             <span className="nav-icon">🔩</span>
             <span className="nav-label">零件</span>
           </a>
-          <a href="/parts/new" className="nav-item">
-            <span className="nav-icon">➕</span>
-            <span className="nav-label">新增</span>
+          <a href="/transactions" className="nav-item">
+            <span className="nav-icon">📋</span>
+            <span className="nav-label">日志</span>
           </a>
-          <a href="/import" className="nav-item">
-            <span className="nav-icon">📥</span>
-            <span className="nav-label">导入</span>
+          <a href="/purchases" className="nav-item">
+            <span className="nav-icon">💰</span>
+            <span className="nav-label">采购</span>
           </a>
           <a href="/settings" className="nav-item">
             <span className="nav-icon">⚙️</span>

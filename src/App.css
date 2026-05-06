@@ -446,6 +446,91 @@ body {
   color: #ff6b35;
 }
 
+/* ===== 库存预警列表 ===== */
+.alert-section {
+  margin: 12px 0;
+  background: #fff3f0;
+  border: 1px solid #ffccc7;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.alert-header {
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #d4380d;
+  background: #fff1f0;
+  border-bottom: 1px solid #ffccc7;
+}
+
+.alert-list {
+  padding: 4px 0;
+}
+
+.alert-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #ffe7e0;
+  transition: background 0.15s;
+}
+
+.alert-item:last-child {
+  border-bottom: none;
+}
+
+.alert-item:active {
+  background: #ffe7e0;
+}
+
+.alert-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.alert-item-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.alert-item-location {
+  font-size: 12px;
+  color: #999;
+}
+
+.alert-item-model {
+  font-size: 12px;
+  color: #999;
+}
+
+.alert-item-qty {
+  font-size: 13px;
+  color: #d4380d;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.alert-item-qty strong {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.alert-item-arrow {
+  font-size: 20px;
+  color: #d9d9d9;
+  flex-shrink: 0;
+}
+
 /* ===== 昵称徽章 ===== */
 .operator-badge {
   font-size: 12px;
