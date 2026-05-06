@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage';
 import PartsPage from './pages/PartsPage';
 import PartDetailPage from './pages/PartDetailPage';
 import PartFormPage from './pages/PartFormPage';
+import SettingsPage from './pages/SettingsPage';
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
             <Route path="/parts/:id" element={<PartDetailPage />} />
             <Route path="/parts/new" element={<PartFormPage />} />
             <Route path="/parts/:id/edit" element={<PartFormPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </main>
 
@@ -30,6 +32,10 @@ export default function App() {
           <a href="/parts/new" className="nav-item">
             <span className="nav-icon">➕</span>
             <span className="nav-label">新增</span>
+          </a>
+          <a href="/settings" className="nav-item">
+            <span className="nav-icon">⚙️</span>
+            <span className="nav-label">设置</span>
           </a>
         </nav>
       </div>

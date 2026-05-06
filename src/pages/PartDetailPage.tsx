@@ -13,7 +13,7 @@ export default function PartDetailPage() {
   const [part, setPart] = useState<Part | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showPanel, setShowPanel] = useState<'in' | 'out' | null>(null);
+  const [showPanel, setShowPanel] = useState<'in' | 'out' | 'scrap' | null>(null);
   const [txQty, setTxQty] = useState(1);
   const [txRemark, setTxRemark] = useState('');
   const [toast, setToast] = useState('');
@@ -70,12 +70,12 @@ export default function PartDetailPage() {
     setLoading(false);
   }
 
-  async function doTransaction(type: 'in' | 'out') {
+  async function doTransaction(type: 'in' | 'out' | 'scrap') {
     if (!part || txQty <= 0) return;
 
     const newQty = type === 'in' ? part.quantity + txQty : part.quantity - txQty;
     if (newQty < 0) {
-      setToast('库存不足，无法出库');
+      setToast('库存不足，无法' + (type === 'scrap' ? '报废' : '出库'));
       setTimeout(() => setToast(''), 2000);
       return;
     }
@@ -101,7 +101,7 @@ export default function PartDetailPage() {
       remark: txRemark || null,
     });
 
-    setToast(type === 'in' ? `✅ 入库 +${txQty}` : `📤 出库 -${txQty}`);
+    setToast(type === 'in' ? `✅ 入库 +${txQty}` : type === 'out' ? `📤 出库 -${txQty}` : `🗑️ 报废 -${txQty}`);
     setTimeout(() => setToast(''), 2000);
     setShowPanel(null);
     setTxQty(1);
@@ -150,9 +150,10 @@ export default function PartDetailPage() {
       </div>
 
       {/* 出入库按钮 */}
-      <div className="action-bar">
+      <div className="action-bar" style={{ flexWrap: 'wrap' }}>
         <button className="btn btn-success" onClick={() => setShowPanel('in')}>📥 入库</button>
         <button className="btn btn-danger" onClick={() => setShowPanel('out')}>📤 出库</button>
+        <button className="btn" style={{ background: '#999', color: '#fff', minWidth: 'calc(33% - 8px)' }} onClick={() => setShowPanel('scrap')}>🗑️ 报废</button>
       </div>
 
       {/* 详细信息 */}
@@ -213,7 +214,9 @@ export default function PartDetailPage() {
       {/* 出入库面板 */}
       {showPanel && (
         <div className="panel" onClick={(e) => e.target === e.currentTarget && setShowPanel(null)}>
-          <div className="panel-title">{showPanel === 'in' ? '📥 入库' : '📤 出库'}</div>
+          <div className="panel-title">
+            {showPanel === 'in' ? '📥 入库' : showPanel === 'out' ? '📤 出库' : '🗑️ 报废'}
+          </div>
           <div className="form-group">
             <label className="form-label">数量</label>
             <input
@@ -236,8 +239,12 @@ export default function PartDetailPage() {
           </div>
           <div className="panel-actions">
             <button className="btn" style={{ background: '#eee', color: '#333' }} onClick={() => setShowPanel(null)}>取消</button>
-            <button className={`btn ${showPanel === 'in' ? 'btn-success' : 'btn-danger'}`} onClick={() => doTransaction(showPanel)}>
-              确认{showPanel === 'in' ? '入库' : '出库'}
+            <button
+              className={`btn ${showPanel === 'in' ? 'btn-success' : showPanel === 'out' ? 'btn-danger' : ''}`}
+              style={showPanel === 'scrap' ? { background: '#999', color: '#fff' } : undefined}
+              onClick={() => doTransaction(showPanel)}
+            >
+              确认{showPanel === 'in' ? '入库' : showPanel === 'out' ? '出库' : '报废'}
             </button>
           </div>
         </div>

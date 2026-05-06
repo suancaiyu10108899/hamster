@@ -1,6 +1,6 @@
 # Hamster 项目状态
 
-> 更新日期：2026-05-06
+> 更新日期：2026-05-06 (第二次更新)
 >
 > 用途：AI 助手上下文恢复，记录当前进度和下一步行动。
 
@@ -29,18 +29,30 @@
 - [x] 移动端适配 UI
 - [x] TypeScript 构建通过
 - [x] Cloudflare Pages 部署
+- [x] Realtime 订阅集成（入库/出库/报废推送）
+- [x] 分类/位置管理 UI（SettingsPage，可动态增删）
+- [x] 报废操作入口（PartDetailPage 三按钮）
+- [x] TypeScript 构建通过
+- [x] Cloudflare Pages 部署更新
 
-## 本次修复（2026-05-06）
+## 本次修复（2026-05-06 会话）
 
+### 第一次更新
 - 修复 HomePage 实时数据加载（从占位符 → Supabase 真实查询）
 - 修复 App.tsx CSS 类名不一致（main-content → app-main）
 - 清理 HomePage 死代码
 - 验证 Supabase Realtime 可用
 
-## 待完成
+### 第二次更新（Phase 2 P1 功能）
+- PartsPage 新增分类标签筛选（复用 category_id 字段）
+- 详情页添加 Realtime 订阅（他人操作自动刷新）
+- 列表页添加 Realtime 订阅（新零件/库存变化自动刷新）
+- 新增 SettingsPage（分类标签、位置标签管理，支持动态增删）
+- PartDetailPage 添加「报废」操作入口
+- 修复 PartFormPage 保存后不返回列表的问题
+- 更新路线图标记已完成项
 
-- [ ] Realtime 订阅集成（目前刷新可见，尚未做 WebSocket 推送）
-- [ ] 批量操作（批量入库/出库/报废）
+## 待完成
 - [ ] CSV 导入导出
 - [ ] 扫码功能（调用手机摄像头）
 - [ ] 图片上传（零件照片）
