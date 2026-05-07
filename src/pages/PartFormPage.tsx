@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import type { Part, Category, Location } from '@/types';
@@ -39,6 +39,56 @@ export default function PartFormPage() {
     ]);
     if (catData) setCategories(catData);
     if (locData) setLocations(locData);
+  }
+
+  // 构建位置树（用于分组下拉）
+  const locationTree = useMemo(() => {
+    const roots: Location[] = [];
+    const childrenMap = new Map<string, Location[]>();
+
+    for (const loc of locations) {
+      if (loc.parent_id) {
+        const list = childrenMap.get(loc.parent_id) || [];
+        list.push(loc);
+        childrenMap.set(loc.parent_id, list);
+      } else {
+        roots.push(loc);
+      }
+    }
+    return { roots, childrenMap };
+  }, [locations]);
+
+  // 递归收集子树中的所有位置 ID
+  function collectSubtreeIds(parentId: string): Set<string> {
+    const ids = new Set<string>();
+    ids.add(parentId);
+    const children = locationTree.childrenMap.get(parentId) || [];
+    for (const child of children) {
+      for (const id of collectSubtreeIds(child.id)) {
+        ids.add(id);
+      }
+    }
+    return ids;
+  }
+
+  // 递归渲染位置选项（带缩进）
+  function renderLocationOptions(parentId: string, depth: number): JSX.Element[] {
+    const children = locationTree.childrenMap.get(parentId) || [];
+    const result: JSX.Element[] = [];
+    for (const child of children) {
+      const indent = '\u00A0\u00A0'.repeat(depth);
+      const hasChildren =
+        locationTree.childrenMap.has(child.id) &&
+        (locationTree.childrenMap.get(child.id)!.length > 0);
+      result.push(
+        <option key={child.id} value={child.id}>
+          {indent}{hasChildren ? '📁' : '📍'} {child.code}
+          {child.label ? ` - ${child.label}` : ''}
+        </option>
+      );
+      result.push(...renderLocationOptions(child.id, depth + 1));
+    }
+    return result;
   }
 
   async function loadPart(partId: string) {
@@ -114,6 +164,9 @@ export default function PartFormPage() {
     }
   }
 
+  // 供位置下拉过滤非顶级节点直接选中的辅助变量
+  // （保留 unused 的 collectSubtreeIds 供后续扩展）
+
   return (
     <div className="page" style={{ padding: 0 }}>
       {toast && <div className="toast">{toast}</div>}
@@ -172,10 +225,13 @@ export default function PartFormPage() {
             onChange={(e) => setLocationId(e.target.value)}
           >
             <option value="">选择位置</option>
-            {locations.map((l) => (
-              <option key={l.id} value={l.id}>
-                {getLocationPath(l, locations)}
-              </option>
+            {locationTree.roots.map((root) => (
+              <optgroup key={root.id} label={`🏢 ${root.label || root.code}`}>
+                <option value={root.id}>
+                  {'\u00A0\u00A0'}📁 {root.code}（根位置）
+                </option>
+                {renderLocationOptions(root.id, 2)}
+              </optgroup>
             ))}
           </select>
         </div>

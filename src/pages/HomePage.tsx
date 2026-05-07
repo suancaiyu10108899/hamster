@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import type { Part, Location } from '@/types';
-import { getLocationPath } from '@/lib/helpers';
+import { getLocationPath, getTopLevelLocation } from '@/lib/helpers';
 
 function getOperator(): string {
   return localStorage.getItem('hamster_operator') || '';
@@ -71,6 +71,42 @@ export default function HomePage() {
           <div className="stat-label">⚠️ 库存不足</div>
         </div>
       </div>
+
+      {/* 按仓库统计 */}
+      {!loading && (() => {
+        const topLevelLocs = allLocations.filter((l) => !l.parent_id);
+        if (topLevelLocs.length === 0) return null;
+        const warehouseStats: { loc: Location; total: number; lowStock: number }[] = [];
+        for (const topLoc of topLevelLocs) {
+          let total = 0;
+          let lowStock = 0;
+          for (const p of parts) {
+            const ptl = getTopLevelLocation(p.location, allLocations);
+            if (ptl && ptl.id === topLoc.id) {
+              total++;
+              if (p.min_quantity != null && p.quantity <= p.min_quantity) lowStock++;
+            }
+          }
+          warehouseStats.push({ loc: topLoc, total, lowStock });
+        }
+        if (warehouseStats.length === 0) return null;
+        return (
+          <div className="stats-grid" style={{ marginTop: 0, marginBottom: 12 }}>
+            {warehouseStats.map((ws) => (
+              <div
+                key={ws.loc.id}
+                className={`stat-card ${ws.lowStock > 0 ? 'warning' : ''}`}
+                onClick={() => navigate(`/parts?warehouse=${ws.loc.id}`)}
+              >
+                <div className="stat-num" style={{ fontSize: 18 }}>🏢 {ws.loc.label || ws.loc.code}</div>
+                <div className="stat-label">
+                  共 {ws.total} 个零件{ws.lowStock > 0 ? ` · ⚠️ ${ws.lowStock} 不足` : ''}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* 低库存预警列表 */}
       {!loading && lowStockParts.length > 0 && (

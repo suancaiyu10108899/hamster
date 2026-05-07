@@ -1,17 +1,24 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import type { Part, Location } from '@/types';
-import { getLocationPath } from '@/lib/helpers';
+import { getLocationPath, getTopLevelLocation, exportPartsCSV } from '@/lib/helpers';
 
 export default function PartsPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [parts, setParts] = useState<Part[]>([]);
   const [allLocations, setAllLocations] = useState<Location[]>([]);
   const [search, setSearch] = useState('');
+  const [warehouseFilter, setWarehouseFilter] = useState(searchParams.get('warehouse') || '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [configReady, setConfigReady] = useState(true);
+
+  // 批量操作状态
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [batchTargetLocationId, setBatchTargetLocationId] = useState('');
+  const [batchMoving, setBatchMoving] = useState(false);
 
   useEffect(() => {
     loadParts();
@@ -62,10 +69,19 @@ export default function PartsPage() {
     if (data) setAllLocations(data);
   }
 
+  // 顶层仓库列表（用于下拉筛选）
+  const topLevelLocations = allLocations.filter((l) => !l.parent_id);
+
+  // 按顶级仓库筛选零件（搜索范围覆盖该仓库下所有子位置）
   const filtered = parts.filter((p) => {
+    // 仓库筛选
+    if (warehouseFilter) {
+      const topLoc = getTopLevelLocation(p.location, allLocations);
+      if (!topLoc || topLoc.id !== warehouseFilter) return false;
+    }
+    // 搜索筛选
     const s = search.toLowerCase();
     if (!s) return true;
-    // 跨级搜索：名称、型号、分类、厂家、条码、位置路径
     const locPath = getLocationPath(p.location, allLocations).toLowerCase();
     return (
       p.name.toLowerCase().includes(s) ||
@@ -76,6 +92,71 @@ export default function PartsPage() {
       locPath.includes(s)
     );
   });
+
+  // 切换单个零件选中状态
+  function toggleSelect(partId: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(partId)) {
+        next.delete(partId);
+      } else {
+        next.add(partId);
+      }
+      return next;
+    });
+  }
+
+  // 全选 / 取消全选
+  function toggleSelectAll() {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((p) => p.id)));
+    }
+  }
+
+  // 批量移动零件
+  async function batchMove() {
+    if (!batchTargetLocationId || selectedIds.size === 0) return;
+    setBatchMoving(true);
+    try {
+      const ids = Array.from(selectedIds);
+      const { error: err } = await supabase
+        .from('parts')
+        .update({ location_id: batchTargetLocationId })
+        .in('id', ids);
+
+      if (err) {
+        alert('移动失败：' + err.message);
+      } else {
+        setSelectedIds(new Set());
+        setBatchTargetLocationId('');
+        loadParts();
+      }
+    } catch (e: any) {
+      alert('移动失败：' + e.message);
+    } finally {
+      setBatchMoving(false);
+    }
+  }
+
+  // 递归构建位置缩进选项
+  function buildLocationOptions(locs: Location[], parentId: string | null = null, depth: number = 0): JSX.Element[] {
+    const children = locs.filter((l) => l.parent_id === parentId);
+    const result: JSX.Element[] = [];
+    for (const loc of children) {
+      const prefix = depth > 0 ? '│　'.repeat(depth - 1) + (depth === 1 ? '├─ ' : '├─ ') : '';
+      result.push(
+        <option key={loc.id} value={loc.id}>
+          {prefix}{loc.label || loc.code}
+        </option>
+      );
+      result.push(...buildLocationOptions(locs, loc.id, depth + 1));
+    }
+    return result;
+  }
+
+  const locationTreeOptions = useMemo(() => buildLocationOptions(allLocations), [allLocations]);
 
   if (loading) {
     return <div className="page" style={{ textAlign: 'center', paddingTop: 80 }}>加载中...</div>;
@@ -97,13 +178,24 @@ export default function PartsPage() {
     );
   }
 
+  const hasSelection = selectedIds.size > 0;
+
   return (
     <div className="page" style={{ padding: 0 }}>
       <div className="page-header">
         <h1>📦 零件</h1>
-        <button className="btn btn-primary" onClick={() => navigate('/parts/new')}>
-          ➕ 添加
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            className="btn btn-secondary"
+            onClick={() => exportPartsCSV(filtered, allLocations)}
+            title="导出为 CSV（包含筛选结果）"
+          >
+            📥 导出
+          </button>
+          <button className="btn btn-primary" onClick={() => navigate('/parts/new')}>
+            ➕ 添加
+          </button>
+        </div>
       </div>
 
       <div className="search-bar">
@@ -113,9 +205,126 @@ export default function PartsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        {topLevelLocations.length > 0 && (
+          <select
+            value={warehouseFilter}
+            onChange={(e) => setWarehouseFilter(e.target.value)}
+            style={{ marginTop: 8 }}
+          >
+            <option value="">🏢 全部仓库</option>
+            {topLevelLocations.map((loc) => (
+              <option key={loc.id} value={loc.id}>
+                🏢 {loc.label || loc.code}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       {error && <div style={{ padding: '8px 16px', color: '#ff6b35', fontSize: 14 }}>{error}</div>}
+
+      {/* 仓库标题栏：筛选某个仓库后显示醒目标识 */}
+      {warehouseFilter && (() => {
+        const currentWarehouse = topLevelLocations.find((l) => l.id === warehouseFilter);
+        if (!currentWarehouse) return null;
+        return (
+          <div style={{
+            margin: '0 16px 8px',
+            padding: '12px 16px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: 10,
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 8,
+          }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 600 }}>🏢 正在浏览：{currentWarehouse.label || currentWarehouse.code}</div>
+              <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>共 {filtered.length} 个零件</div>
+            </div>
+            <button
+              onClick={() => setWarehouseFilter('')}
+              style={{
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                color: '#fff',
+                padding: '6px 12px',
+                borderRadius: 6,
+                fontSize: 12,
+                cursor: 'pointer',
+              }}
+            >
+              ✕ 清除筛选
+            </button>
+          </div>
+        );
+      })()}
+
+      {/* 批量操作栏 */}
+      {hasSelection && (
+        <div style={{
+          margin: '0 16px 8px',
+          padding: '10px 14px',
+          background: '#f0f4ff',
+          border: '1px solid #c3d5ff',
+          borderRadius: 10,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          flexWrap: 'wrap',
+        }}>
+          <span style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap' }}>
+            ✅ 已选 {selectedIds.size} 个零件
+          </span>
+          <select
+            value={batchTargetLocationId}
+            onChange={(e) => setBatchTargetLocationId(e.target.value)}
+            style={{ flex: 1, minWidth: 150 }}
+          >
+            <option value="">选择目标仓库/位置...</option>
+            {locationTreeOptions}
+          </select>
+          <button
+            className="btn btn-primary"
+            disabled={!batchTargetLocationId || batchMoving}
+            onClick={batchMove}
+            style={{ fontSize: 13, padding: '6px 14px' }}
+          >
+            {batchMoving ? '移动中...' : '📦 批量移动'}
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={() => { setSelectedIds(new Set()); setBatchTargetLocationId(''); }}
+            style={{ fontSize: 13, padding: '6px 14px' }}
+          >
+            取消选择
+          </button>
+        </div>
+      )}
+
+      {/* 全选/取消全选栏 */}
+      {filtered.length > 0 && (
+        <div style={{
+          margin: '0 16px 4px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          fontSize: 13,
+          color: '#666',
+        }}>
+          <label style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <input
+              type="checkbox"
+              checked={selectedIds.size === filtered.length && filtered.length > 0}
+              onChange={toggleSelectAll}
+            />
+            {selectedIds.size === filtered.length ? '取消全选' : '全选当前列表'}
+          </label>
+          <span>({filtered.length} 个)</span>
+        </div>
+      )}
 
       {filtered.length === 0 && search && (
         <div className="empty-state">
@@ -126,21 +335,56 @@ export default function PartsPage() {
 
       <div className="parts-list">
         {filtered.map((part) => (
-          <div key={part.id} className={`part-card ${(part.min_quantity != null && part.quantity <= part.min_quantity) ? 'low-stock' : ''}`} onClick={() => navigate(`/parts/${part.id}`)}>
-            <div className="part-card-emoji">📌</div>
-            <div className="part-card-info">
-              <div className="part-card-name">{part.name}</div>
-              <div className="part-card-meta">
-                {part.model_number && <span>{part.model_number}</span>}
-                <span>{part.category?.name || '未分类'}</span>
-                <span>{getLocationPath(part.location, allLocations)}</span>
-              </div>
+          <div
+            key={part.id}
+            className={`part-card ${(part.min_quantity != null && part.quantity <= part.min_quantity) ? 'low-stock' : ''}`}
+            style={{ position: 'relative' }}
+          >
+            {/* 复选框 */}
+            <div
+              style={{
+                position: 'absolute',
+                left: 10,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 1,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <input
+                type="checkbox"
+                checked={selectedIds.has(part.id)}
+                onChange={() => toggleSelect(part.id)}
+                style={{ width: 18, height: 18, cursor: 'pointer' }}
+              />
             </div>
-            <div className="part-card-qty">
-              <div className={`qty-num ${(part.min_quantity != null && part.quantity <= part.min_quantity) ? 'low-stock' : ''}`}>
-                {part.quantity}
+
+            {/* 可点击区域 */}
+            <div
+              onClick={() => navigate(`/parts/${part.id}`)}
+              style={{
+                display: 'flex',
+                width: '100%',
+                alignItems: 'center',
+                paddingLeft: 36,
+                cursor: 'pointer',
+              }}
+            >
+              <div className="part-card-emoji">📌</div>
+              <div className="part-card-info">
+                <div className="part-card-name">{part.name}</div>
+                <div className="part-card-meta">
+                  {part.model_number && <span>{part.model_number}</span>}
+                  <span>{part.category?.name || '未分类'}</span>
+                  <span>{getLocationPath(part.location, allLocations)}</span>
+                </div>
               </div>
-              <div className="qty-unit">{part.unit}</div>
+              <div className="part-card-qty">
+                <div className={`qty-num ${(part.min_quantity != null && part.quantity <= part.min_quantity) ? 'low-stock' : ''}`}>
+                  {part.quantity}
+                </div>
+                <div className="qty-unit">{part.unit}</div>
+              </div>
             </div>
           </div>
         ))}

@@ -41,6 +41,18 @@
 8. **部署确认**：Netlify 生产部署 hamster-rm-parts.netlify.app，前端重新构建部署成功
 9. **文档完善**：开发日志、调试日志、学习笔记（数据库 Schema 调试与 PostgREST）全部补齐
 
+## 本次已完成（2026-05-07 仓库-货架-层位三级体系）
+
+1. **数据库迁移 SQL**：`supabase/migrations/004-seed-warehouses.sql`——种子数据脚本可手动执行
+2. **工具函数**：`src/lib/helpers.ts` 新增 `getTopLevelLocation()` 和 `getLocationPath()`
+3. **位置选择器层级化**：`PartFormPage.tsx`——仓库/货架/层位分组显示，optgroup 缩进
+4. **零件列表仓库筛选**：`PartsPage.tsx`——按顶层仓库筛选零件，搜索覆盖位置路径
+5. **一键初始化仓库体系**：`SettingsPage.tsx` 位置管理 tab 新增按钮——删除现有位置并创建 2仓库+5货架+20层位
+6. **位置树/分类树视图**：`SettingsPage.tsx`——递归组件展示层级结构，替代扁平列表
+7. **首页按仓库统计**：`HomePage.tsx`——stats-grid 展示每个仓库的零件总数 + 低库存数
+8. **开发日志**：`docs/devlog/2026-05-07-warehouse-location-hierarchy.md`
+9. **教学文档**：`docs/personal-learning/chapter-7-code-file-by-file.md`——代码逐文件详解（基于从零教学文档第7章的扩展）
+
 ## 待完成
 
 - [ ] 队友试用反馈收集
@@ -66,3 +78,18 @@
 2. 零件照片上传（Supabase Storage）
 3. 数据导出功能（CSV 备份）
 4. PWA 离线支持调研
+5. **教学会话：从零全面详解项目**（进行中）——详见 `docs/personal-learning/hamster-zero-to-full-understanding.md`
+
+## 2026-05-07 新增：从零教学文档
+
+为 BME 背景的用户创建了 `docs/personal-learning/hamster-zero-to-full-understanding.md`，覆盖：
+- 前置概念（不需要先学什么）
+- 项目一句话理解
+- 网页如何跑起来的完整流程（含医院系统类比）
+- 技术栈逐个拆解（React/TypeScript/Vite/npm/Supabase/PostgreSQL/Netlify）
+- 项目文件逐一解释
+- 数据库从零详解（表/行/列/SQL/外键/RLS/EAV）
+- 代码逐文件详解（main.tsx/App.tsx/supabase.ts/types/helpers/页面通用模式/useState/useEffect/async-await）
+- 部署流程讲解
+- 常见困惑解答 + 提问模板
+- 待扩展主题清单（根据用户提问动态补充）

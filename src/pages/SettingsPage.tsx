@@ -319,6 +319,61 @@ export default function SettingsPage() {
         </div>
       ) : (
         <div>
+          {/* 一键初始化仓库体系 */}
+          <div className="settings-form" style={{ background: '#f0f7ff', border: '1px solid #b3d4ff' }}>
+            <div style={{ fontSize: 13, color: '#666', marginBottom: 8 }}>
+              🚀 首次使用？一键创建常见的仓库-货架-层位结构。
+            </div>
+            <button
+              className="btn btn-primary btn-block"
+              onClick={async () => {
+                if (!window.confirm('这将清空所有现有位置并创建示例仓库结构（仓库1/仓库2），确定继续？')) return;
+                setLoading(true);
+                // 删除所有现有位置
+                await supabase.from('locations').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                // 创建仓库1、仓库2及子位置
+                const wh1 = { code: 'A1', label: '主仓库', parent_id: null };
+                const wh2 = { code: 'B1', label: '备件仓库', parent_id: null };
+                const { data: whData } = await supabase.from('locations').insert([wh1, wh2]).select('id');
+                const wh1Id = whData?.[0]?.id;
+                const wh2Id = whData?.[1]?.id;
+                if (!wh1Id || !wh2Id) {
+                  setToast('初始化失败：无法创建仓库');
+                  setLoading(false);
+                  setTimeout(() => setToast(''), 2000);
+                  return;
+                }
+                const children = [
+                  { code: 'A1-1', label: 'A1 1号货架', parent_id: wh1Id },
+                  { code: 'A1-2', label: 'A1 2号货架', parent_id: wh1Id },
+                  { code: 'A1-3', label: 'A1 3号货架', parent_id: wh1Id },
+                  { code: 'B1-1', label: 'B1 1号货架', parent_id: wh2Id },
+                  { code: 'B1-2', label: 'B1 2号货架', parent_id: wh2Id },
+                ];
+                const { data: shelves } = await supabase.from('locations').insert(children).select('id,code');
+                if (!shelves || shelves.length === 0) {
+                  setToast('初始化失败：无法创建货架');
+                  setLoading(false);
+                  setTimeout(() => setToast(''), 2000);
+                  return;
+                }
+                const bins = [];
+                for (const s of shelves) {
+                  for (let i = 1; i <= 4; i++) {
+                    bins.push({ code: `${s.code}-${String(i).padStart(2, '0')}`, label: `层${i}`, parent_id: s.id });
+                  }
+                }
+                await supabase.from('locations').insert(bins);
+                setLoading(false);
+                loadData();
+                setToast('✅ 仓库体系初始化完成！');
+                setTimeout(() => setToast(''), 2000);
+              }}
+            >
+              🏭 一键初始化仓库体系
+            </button>
+          </div>
+
           {/* Add/Edit form */}
           <div className="settings-form">
             <input
