@@ -7,6 +7,8 @@ import SettingsPage from './pages/SettingsPage';
 import ImportPage from './pages/ImportPage';
 import TransactionsPage from './pages/TransactionsPage';
 import PurchasesPage from './pages/PurchasesPage';
+import BomPage from './pages/BomPage';
+import BomCheckoutPage from './pages/BomCheckoutPage';
 
 export default function App() {
   return (
@@ -23,6 +25,8 @@ export default function App() {
             <Route path="/import" element={<ImportPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
             <Route path="/purchases" element={<PurchasesPage />} />
+            <Route path="/bom" element={<BomPage />} />
+            <Route path="/bom/:id/checkout" element={<BomCheckoutPage />} />
           </Routes>
         </main>
 
@@ -42,6 +46,10 @@ export default function App() {
           <a href="/purchases" className="nav-item">
             <span className="nav-icon">💰</span>
             <span className="nav-label">采购</span>
+          </a>
+          <a href="/bom" className="nav-item">
+            <span className="nav-icon">📋</span>
+            <span className="nav-label">BOM</span>
           </a>
           <a href="/settings" className="nav-item">
             <span className="nav-icon">⚙️</span>

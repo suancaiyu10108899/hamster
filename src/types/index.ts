@@ -81,3 +81,33 @@ export interface PurchaseItem {
   sort_order: number;
   created_at: string;
 }
+
+// BOM 模板
+export interface Bom {
+  id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  items?: BomItem[];
+}
+
+// BOM 明细
+export interface BomItem {
+  id: string;
+  bom_id: string;
+  part_id: string;
+  quantity: number;
+  sort_order: number;
+  created_at: string;
+  // 关联零件
+  part?: Part | null;
+}
+
+// CSV 粘贴解析结果（带匹配状态）
+export interface BomParsedRow {
+  partName: string;
+  modelNumber: string;
+  quantity: number;
+  matchedPart: Part | null;  // 自动匹配到的零件
+  matchConfident: boolean;   // 是否精确匹配
+}

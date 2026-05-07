@@ -53,6 +53,15 @@
 8. **开发日志**：`docs/devlog/2026-05-07-warehouse-location-hierarchy.md`
 9. **教学文档**：`docs/personal-learning/chapter-7-code-file-by-file.md`——代码逐文件详解（基于从零教学文档第7章的扩展）
 
+## 本次已完成（2026-05-07 BOM 批量出库）
+
+1. **数据库迁移**：`supabase/migrations/005-bom.sql`——boms 表 + bom_items 表
+2. **类型定义**：`src/types/index.ts` 新增 Bom / BomItem / BomParsedRow
+3. **BOM 列表页**：`src/pages/BomPage.tsx`——CSV 粘贴录入、自动匹配零件、可编辑确认
+4. **BOM 出库确认页**：`src/pages/BomCheckoutPage.tsx`——库存对比表、倍数选择、一键批量出库
+5. **路由注册**：`src/App.tsx` 新增 `/bom` 和 `/bom/:id/checkout` 路由 + 底部导航
+6. **开发日志**：`docs/devlog/2026-05-07-excel-batch-checkout.md`
+
 ## 待完成
 
 - [ ] 队友试用反馈收集
