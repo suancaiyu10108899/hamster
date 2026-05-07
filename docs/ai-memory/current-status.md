@@ -62,6 +62,21 @@
 5. **路由注册**：`src/App.tsx` 新增 `/bom` 和 `/bom/:id/checkout` 路由 + 底部导航
 6. **开发日志**：`docs/devlog/2026-05-07-excel-batch-checkout.md`
 
+## 2026-05-08 新增：BOM 反馈修复
+
+基于 Barry 测试反馈，修复了 3 个问题：
+1. **数据库变更**：`bom_items.part_id` 从 NOT NULL 改为可 NULL，允许保存未匹配零件
+2. **BomPage**：添加清空按钮 + 允许未匹配行保存 + 粘贴区 UI 间距优化
+3. **BomCheckoutPage**：出库时过滤掉未匹配零件（part_id 为 NULL 的跳过）
+4. **文档**：`docs/devlog/2026-05-08-bom-feedback-fixes.md`
+
+代码已提交推送：`495bde3`
+
+⚠️ **数据库待部署**：需要在 Supabase Dashboard 执行：
+```sql
+ALTER TABLE bom_items ALTER COLUMN part_id DROP NOT NULL;
+```
+
 ## 待完成
 
 - [ ] 队友试用反馈收集
@@ -78,8 +93,9 @@
 | EAV 自定义字段 | 待实现 | data-model.md |
 | 部署平台：Netlify | ✅ | environment-setup.md |
 | 双轨策略：Web MVP 先行 | ✅ | README.md |
-| 采购记录独立表 | ✅ | 本次实现 |
-| 数据库迁移执行确认流程 | ✅ | 本次修复中建立 |
+| 采购记录独立表 | ✅ | 2026-05-06 实现 |
+| 数据库迁移执行确认流程 | ✅ | 2026-05-06 建立 |
+| BOM 批量出库 | ✅ | 2026-05-08 完成（含反馈修复） |
 
 ## 下次会话任务
 
