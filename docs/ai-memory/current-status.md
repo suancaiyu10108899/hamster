@@ -64,13 +64,12 @@
 
 ## 2026-05-08 新增：BOM 反馈修复
 
-基于 Barry 测试反馈，修复了 3 个问题：
+基于 Barry 测试反馈，修复了 4 个问题：
 1. **数据库变更**：`bom_items.part_id` 从 NOT NULL 改为可 NULL，允许保存未匹配零件
 2. **BomPage**：添加清空按钮 + 允许未匹配行保存 + 粘贴区 UI 间距优化
 3. **BomCheckoutPage**：出库时过滤掉未匹配零件（part_id 为 NULL 的跳过）
-4. **文档**：`docs/devlog/2026-05-08-bom-feedback-fixes.md`
-
-代码已提交推送：`495bde3`
+4. **第二次修复**：移除「必须有匹配零件才能创建」的限制——所有解析行都保存，未匹配的 `part_id=null`，保存后提示用户有几条未匹配
+5. **文档**：`docs/devlog/2026-05-08-bom-feedback-fixes.md`
 
 ⚠️ **数据库待部署**：需要在 Supabase Dashboard 执行：
 ```sql

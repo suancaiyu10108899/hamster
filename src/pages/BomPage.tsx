@@ -162,9 +162,8 @@ export default function BomPage() {
       setError('请输入 BOM 名称');
       return;
     }
-    const validRows = parsedRows.filter(r => r.matchedPart && r.quantity > 0);
-    if (validRows.length === 0) {
-      setError('没有可保存的零件（请确保至少一行已匹配到零件且数量>0）');
+    if (parsedRows.length === 0) {
+      setError('没有可保存的行（请先解析 CSV）');
       return;
     }
 
@@ -184,10 +183,10 @@ export default function BomPage() {
       return;
     }
 
-    // 批量插入明细
-    const items = validRows.map((r, i) => ({
+    // 批量插入明细（所有行都保存，匹配不到的 part_id 为 null）
+    const items = parsedRows.map((r, i) => ({
       bom_id: bom.id,
-      part_id: r.matchedPart!.id,
+      part_id: r.matchedPart?.id ?? null,
       quantity: r.quantity,
       sort_order: i,
     }));
@@ -202,10 +201,16 @@ export default function BomPage() {
       return;
     }
 
+    const unmatchedCount = parsedRows.filter(r => !r.matchedPart).length;
+
     setSaving(false);
     setShowCreate(false);
     resetForm();
     loadBoms();
+
+    if (unmatchedCount > 0) {
+      alert(`✅ BOM 已保存！\n\n⚠️ 有 ${unmatchedCount} 个零件未匹配到库存，出库时会跳过。\n稍后补充零件信息后可重新编辑 BOM。`);
+    }
   }
 
   function resetForm() {
