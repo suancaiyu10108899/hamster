@@ -126,13 +126,12 @@
 
 ## 下次会话任务
 
-1. **TypeScript 编译检查与清理**：根除警告/隐式 any（或先关闭 strict 求可用）
-2. **队友试用反馈收集与分析**
-3. **Supabase DB 迁移执行**：手动执行 `ALTER TABLE bom_items ALTER COLUMN part_id DROP NOT NULL;`
-4. **完整功能走测试**：Import / CSV导出 / 采购入库 / BOM创建出库 端到端验证
-5. 零件照片上传（Supabase Storage）
+1. **队友试用反馈收集与分析**（Phase 2 核心）
+2. P2 功能开发：零件照片上传（Supabase Storage）——最直接影响队友体验
+3. P2 功能开发：扫码出入库
+4. P2 功能开发：EAV 自定义字段 UI
+5. 技术债务：采购入库改为原子操作（Supabase Edge Function / Database Function）
 6. PWA 离线支持调研
-7. **教学会话：从零全面详解项目**（进行中）——详见 `docs/personal-learning/hamster-zero-to-full-understanding.md`
 
 ## 2026-05-07 新增：从零教学文档
 

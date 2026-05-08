@@ -1,9 +1,9 @@
 # Hamster 数据模型设计
 
 > 创建日期：2026-05-03
-> 最后更新：2026-05-04（追加采购表、替代组表）
+> 最后更新：2026-05-08（审计对齐：purchase_items 字段修正、API 映射修正、表计数确认）
 >
-> 状态：初稿
+> 状态：已对齐
 
 ---
 
@@ -193,7 +193,6 @@ CREATE TABLE purchases (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     purchase_date   DATE NOT NULL DEFAULT CURRENT_DATE,
     total_amount    DECIMAL(10,2),
-    link            TEXT,
     reimbursed      BOOLEAN NOT NULL DEFAULT false,
     paid_by         TEXT,
     purchase_intent TEXT,
@@ -209,10 +208,12 @@ CREATE TABLE purchases (
 CREATE TABLE purchase_items (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     purchase_id UUID NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
-    part_id     UUID NOT NULL REFERENCES parts(id),
+    part_id     UUID REFERENCES parts(id) ON DELETE SET NULL,
+    part_name   TEXT NOT NULL,                       -- 零件名称（冗余，方便未关联零件时显示）
     quantity    INTEGER NOT NULL CHECK (quantity > 0),
     unit_price  DECIMAL(10,2),
     subtotal    DECIMAL(10,2),
+    link        TEXT,                                 -- 购买链接
     sort_order  INTEGER NOT NULL DEFAULT 0,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -225,7 +226,7 @@ CREATE INDEX idx_purchase_items_part ON purchase_items(part_id);
 1. 用户在前端填写采购详情（逐行加零件、数量、单价）
 2. 提交时：创建 `purchases` 记录 → 批量创建 `purchase_items`
 3. 系统为每个 `purchase_item` 自动创建一条 `transactions(type='in')` 记录
-4. 触发库存更新（Supabase Edge Function 或应用层事务）
+4. 触发库存更新（应用层循环 INSERT，前端调用 Supabase 客户端）
 
 
 ### 3.3 boms（BOM 模板表）
@@ -374,7 +375,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE bom_items;
 | 删除零件 | DELETE | `/rest/v1/parts?id=eq.{id}` | |
 | 入库/出库 | POST | `/rest/v1/transactions` | 配合应用层逻辑 |
 | 搜索零件 | GET | `/rest/v1/parts?or=(name.ilike.*{keyword},remark.ilike.*{keyword})` | |
-| 采购入库 | POST | `/rest/v1/rpc/checkout_purchase` | Edge Function 原子写入 |
+| 采购入库 | POST（应用层） | 前端循环 INSERT purchase_items + transactions | 非原子，需注意错误处理 |
 
 ---
 
