@@ -90,6 +90,15 @@
 5. **CSS 样式补充**：`photo-upload-area`、`photo-preview`、`photo-actions`、`detail-photo`、`part-card-thumb`
 6. **开发日志**：`docs/devlog/2026-05-08-part-photos.md`
 
+## 本次已完成（2026-05-09 Bug 修复：import LS Key + checkout operator）
+
+1. **ImportPage localStorage Key 修复**：从硬编码 `'hamster_operator'` 改为常量 `OPERATOR_KEY`
+2. **BomCheckoutPage 操作员读取修复**：从硬编码 `'我'` 改为 `localStorage.getItem(OPERATOR_KEY) || '我'`
+3. **文档对齐修复**：
+   - `docs/product/development-roadmap.md`：页面数 11→10、表数 12→11、照片状态 ⏳→✅
+   - `docs/product/requirements.md`：P1 零件拍照 ❌→✅、字段表照片 ❌→✅、P2 删除重复 CSV 导出行
+   - `docs/ai-memory/current-status.md`：中期任务移除已完成项、下次会话移除照片任务
+
 ## 待完成
 
 ### 🔴 短期（本周）
@@ -99,7 +108,6 @@
 
 ### 🟡 中期（P1 剩余 + P2）
 
-- [x] 零件照片上传（Supabase Storage）✅ 2026-05-08
 - [ ] 扫码出入库
 - [ ] EAV 自定义字段 UI
 - [ ] 零件替代关系 UI（part_groups 表已存在）
@@ -136,11 +144,10 @@
 ## 下次会话任务
 
 1. **队友试用反馈收集与分析**（Phase 2 核心）
-2. P2 功能开发：零件照片上传（Supabase Storage）——最直接影响队友体验
-3. P2 功能开发：扫码出入库
-4. P2 功能开发：EAV 自定义字段 UI
-5. 技术债务：采购入库改为原子操作（Supabase Edge Function / Database Function）
-6. PWA 离线支持调研
+2. P2 功能开发：扫码出入库
+3. P2 功能开发：EAV 自定义字段 UI
+4. 技术债务：采购入库改为原子操作（Supabase Edge Function / Database Function）
+5. PWA 离线支持调研
 
 ## 2026-05-07 新增：从零教学文档
 

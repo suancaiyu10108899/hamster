@@ -58,8 +58,8 @@ Phase 0      Phase 1          Phase 2            Phase 3
 - 无 UI 组件库，纯手写 CSS
 
 **统计**：
-- 页面数：11 (Home / Parts / PartDetail / PartForm / Import / Transactions / Purchases / Bom / BomCheckout / Settings)
-- 数据库表：12 (categories, locations, parts, transactions, custom_fields, purchases, purchase_items, part_groups, part_group_members, boms, bom_items)
+- 页面数：10 (Home / Parts / PartDetail / PartForm / Import / Transactions / Purchases / Bom / BomCheckout / Settings)
+- 数据库表：11 (categories, locations, parts, transactions, custom_fields, purchases, purchase_items, part_groups, part_group_members, boms, bom_items)
 - 代码行数：约 3000+ 行 TSX + CSS
 
 ---
@@ -94,7 +94,7 @@ Phase 0      Phase 1          Phase 2            Phase 3
 | 🟡 P1 | 一键采购入库 | 3h | ✅ 已完成 |
 | 🟡 P1 | CSV 导入 + 导出 | 2h | ✅ 已完成 |
 | 🟡 P1 | BOM 物料清单 + 批量出库 | 4h | ✅ 已完成 |
-| 🟢 P2 | 零件照片上传 | 3h | ⏳ Supabase Storage |
+| 🟢 P2 | 零件照片上传 | 3h | ✅ 已完成 |
 | 🟢 P2 | 扫码（相机读取条码） | 4h | ❌ |
 | 🔵 P3 | PWA 离线缓存 | 3h | ❌ |
 | 🔵 P3 | 零件替代组 UI | 2h | ❌ |

@@ -111,7 +111,7 @@ RM 战队零件管理现状痛点：
 - ❌ 自定义字段（EAV 表存在，UI 未实现）
 - ✅ 库存预警：PartFormPage 可设 min_quantity，HomePage 低库存红色预警
 - ✅ 交易历史展示：PartDetailPage 最近 20 条记录 + TransactionsPage 全量浏览/筛选
-- ❌ 零件拍照（Supabase Storage）
+- ✅ 零件拍照（Supabase Storage）
 - ❌ 扫码出入库
 - ✅ 采购入库：PurchasesPage 逐行添加 + 计算总价 + 一键入库
 - ✅ Realtime 实时推送：HomePage / PartsPage / PartDetailPage 均有 channel 订阅
@@ -120,7 +120,6 @@ RM 战队零件管理现状痛点：
 
 #### P2（第三版，锦上添花）— 🟡 部分完成
 
-- ✅ CSV 导出：PartsPage 已支持导出当前筛选结果为 CSV
 - ❌ 数据统计（消耗趋势）
 - ❌ 供应商信息管理
 - ❌ 条码/二维码生成
@@ -144,7 +143,7 @@ RM 战队零件管理现状痛点：
 | 单位 | ❌ | ✅ 已实现 |
 | 存放位置 | ❌ | ✅ 已实现（选择已有位置） |
 | 条码 | ❌ | ✅ 已实现（文本字段） |
-| 照片 | ❌ | ❌ |
+| 照片 | ❌ | ✅ |
 | 备注 | ❌ | ✅ 已实现 |
 | 供应商 | ❌ | ✅ 已实现 |
 

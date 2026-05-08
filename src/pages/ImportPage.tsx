@@ -192,7 +192,7 @@ export default function ImportPage() {
   const handleImport = async () => {
     setImporting(true);
     setMessage(null);
-    const operator = localStorage.getItem('operator_nickname') || '无名';
+    const operator = localStorage.getItem('hamster_operator') || '我';
 
     let success = 0;
     let errors: string[] = [];

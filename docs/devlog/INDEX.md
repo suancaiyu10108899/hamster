@@ -13,3 +13,4 @@
 | 2026-05-08 | [批量操作标注 + 文档对齐](2026-05-08-batch-and-docs.md) | 管理员页面标注、批量导入入口、文档对齐 |
 | 2026-05-08 | [全面代码审计与文档对齐](2026-05-08-code-audit.md) | TS零错误验证、DB schema对齐、README更新、残留清理、路线图审计 |
 | 2026-05-08 | [零件照片上传功能](2026-05-08-part-photos.md) | Supabase Storage 照片上传、拍照、预览、列表缩略图、详情大图 |
+| 2026-05-09 | [Bug 修复与文档对齐](2026-05-09-bugfix-docs-align.md) | ImportPage localStorage Key、BomCheckoutPage 操作员硬编码、3份文档不对齐修正 |

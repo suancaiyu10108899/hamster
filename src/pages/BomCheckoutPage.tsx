@@ -25,7 +25,7 @@ export default function BomCheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [checkingOut, setCheckingOut] = useState(false);
-  const [operator, setOperator] = useState('我');
+  const [operator, setOperator] = useState(localStorage.getItem('hamster_operator') || '我');
   const [remark, setRemark] = useState('');
 
   useEffect(() => {
