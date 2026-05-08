@@ -95,7 +95,7 @@ export interface Bom {
 export interface BomItem {
   id: string;
   bom_id: string;
-  part_id: string;
+  part_id: string | null;
   quantity: number;
   sort_order: number;
   created_at: string;

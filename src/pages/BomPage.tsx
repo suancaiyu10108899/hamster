@@ -61,15 +61,16 @@ export default function BomPage() {
     setLoading(true);
     setError('');
 
+    // 加载 BOM + 每个 BOM 的零件数量
     const { data, error: err } = await supabase
       .from('boms')
-      .select('*')
+      .select('*, bom_items(count)')
       .order('created_at', { ascending: false });
 
     if (err) {
       setError('加载 BOM 失败：' + err.message);
     } else {
-      setBoms(data || []);
+      setBoms((data || []) as Bom[]);
     }
     setLoading(false);
   }
@@ -159,11 +160,11 @@ export default function BomPage() {
 
   async function handleSaveBom() {
     if (!bomName.trim()) {
-      setError('请输入 BOM 名称');
+      alert('请输入 BOM 名称');
       return;
     }
     if (parsedRows.length === 0) {
-      setError('没有可保存的行（请先解析 CSV）');
+      alert('没有可保存的行（请先解析 CSV）——粘贴 CSV 后点击「解析并匹配」');
       return;
     }
 
@@ -221,6 +222,12 @@ export default function BomPage() {
     setAllParts([]);
   }
 
+  // 清空 CSV 粘贴区
+  function clearPasteArea() {
+    setCsvText('');
+    setParsedRows([]);
+  }
+
   async function deleteBom(id: string, name: string) {
     if (!confirm(`确定删除 BOM「${name}」？`)) return;
 
@@ -256,6 +263,11 @@ export default function BomPage() {
   const matchedCount = parsedRows.filter(r => r.matchedPart).length;
   const confidentCount = parsedRows.filter(r => r.matchConfident).length;
 
+  // 计算每个 BOM 的零件数（从 bom_items count 获取）
+  function getItemCount(bom: Bom): number {
+    return (bom as any).bom_items?.[0]?.count ?? 0;
+  }
+
   return (
     <div className="page">
       <div className="page-header">
@@ -272,7 +284,7 @@ export default function BomPage() {
 
       {/* BOM 列表 */}
       {!showCreate && (
-        <>
+        <div>
           {loading ? (
             <div className="loading">加载中...</div>
           ) : boms.length === 0 ? (
@@ -281,16 +293,38 @@ export default function BomPage() {
               <p className="text-muted">点击「新建 BOM」粘贴 CSV 快速创建</p>
             </div>
           ) : (
-            <div className="list">
+            <div className="bom-grid">
               {boms.map(bom => (
-                <div key={bom.id} className="list-item bom-item">
-                  <div className="list-item-main" onClick={() => navigate(`/bom/${bom.id}/checkout`)}>
-                    <span className="list-item-title">{bom.name}</span>
-                    {bom.description && <span className="list-item-sub">{bom.description}</span>}
+                <div
+                  key={bom.id}
+                  className="bom-card"
+                  onClick={() => navigate(`/bom/${bom.id}/checkout`)}
+                >
+                  <div className="bom-card-body">
+                    <div className="bom-card-header">
+                      <span className="bom-card-title">{bom.name}</span>
+                      <span className="bom-badge">{getItemCount(bom)} 个零件</span>
+                    </div>
+                    {bom.description && (
+                      <span className="bom-card-desc">{bom.description}</span>
+                    )}
+                    <div className="bom-card-footer">
+                      <span className="bom-date">
+                        {new Date(bom.created_at).toLocaleDateString('zh-CN', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                        })}
+                      </span>
+                      <span className="bom-action-hint">点击出库 →</span>
+                    </div>
                   </div>
                   <button
-                    className="btn btn-sm btn-danger"
-                    onClick={(e) => { e.stopPropagation(); deleteBom(bom.id, bom.name); }}
+                    className="btn btn-sm btn-danger bom-delete-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteBom(bom.id, bom.name);
+                    }}
                   >
                     删除
                   </button>
@@ -298,7 +332,7 @@ export default function BomPage() {
               ))}
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* 新建/编辑 BOM */}
@@ -307,7 +341,7 @@ export default function BomPage() {
           <h2>新建 BOM</h2>
 
           <div className="form-group">
-            <label>BOM 名称</label>
+            <label>BOM 名称 *</label>
             <input
               type="text"
               className="input"
@@ -315,6 +349,9 @@ export default function BomPage() {
               value={bomName}
               onChange={e => setBomName(e.target.value)}
             />
+            {!bomName.trim() && (
+              <span className="field-hint">必填，请输入 BOM 名称</span>
+            )}
           </div>
 
           <div className="form-group">
@@ -330,16 +367,28 @@ export default function BomPage() {
 
           <div className="form-group">
             <label>粘贴 CSV（必含「名称」和「数量」列，可选「型号」列）</label>
-            <textarea
-              className="input textarea"
-              rows={6}
-              placeholder={`名称,型号,数量
+            <div className="paste-row">
+              <textarea
+                className="input textarea"
+                rows={6}
+                placeholder={`名称,型号,数量
 M3*10螺丝,,20
 MG90S舵机,360度,2
 杜邦线,母对母20cm,10`}
-              value={csvText}
-              onChange={e => setCsvText(e.target.value)}
-            />
+                value={csvText}
+                onChange={e => setCsvText(e.target.value)}
+              />
+              {csvText.trim() && (
+                <button
+                  className="btn btn-sm"
+                  style={{ background: '#f5f5f5', color: '#999' }}
+                  onClick={clearPasteArea}
+                  title="清空粘贴区"
+                >
+                  🗑️ 清空
+                </button>
+              )}
+            </div>
             <button
               className="btn btn-secondary"
               onClick={handleParseCSV}
@@ -420,7 +469,7 @@ MG90S舵机,360度,2
             <button
               className="btn btn-primary"
               onClick={handleSaveBom}
-              disabled={saving || parsedRows.length === 0}
+              disabled={saving}
             >
               {saving ? '保存中...' : `💾 保存 BOM（${matchedCount} 个零件）`}
             </button>
@@ -435,7 +484,74 @@ MG90S舵机,360度,2
       )}
 
       <style>{`
-        .bom-item { cursor: pointer; }
+        .bom-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .bom-card {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px;
+          border: 1px solid #e5e7eb;
+          border-radius: 10px;
+          cursor: pointer;
+          transition: border-color 0.2s, box-shadow 0.2s;
+          background: #fff;
+        }
+        .bom-card:hover {
+          border-color: #6366f1;
+          box-shadow: 0 2px 12px rgba(99, 102, 241, 0.12);
+        }
+        .bom-card-body {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .bom-card-header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .bom-card-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1f2937;
+        }
+        .bom-badge {
+          display: inline-block;
+          padding: 2px 10px;
+          border-radius: 12px;
+          background: #eef2ff;
+          color: #6366f1;
+          font-size: 12px;
+          font-weight: 600;
+          white-space: nowrap;
+        }
+        .bom-card-desc {
+          font-size: 13px;
+          color: #6b7280;
+        }
+        .bom-card-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .bom-date {
+          font-size: 12px;
+          color: #9ca3af;
+        }
+        .bom-action-hint {
+          font-size: 12px;
+          color: #6366f1;
+          font-weight: 500;
+        }
+        .bom-delete-btn {
+          flex-shrink: 0;
+          margin-left: 12px;
+        }
         .matched-part { font-size: 14px; }
         .match-summary {
           margin-bottom: 12px;
@@ -446,6 +562,12 @@ MG90S舵机,360度,2
         .text-warning { color: #f59e0b; font-weight: 600; }
         .text-danger { color: #ef4444; }
         .row-warning { background: #fef9e7; }
+        .field-hint {
+          font-size: 12px;
+          color: #f59e0b;
+          margin-top: 4px;
+          display: block;
+        }
         .input-sm {
           padding: 4px 8px;
           font-size: 13px;
@@ -454,6 +576,18 @@ MG90S舵机,360度,2
           min-height: 100px;
           font-family: monospace;
           font-size: 13px;
+        }
+        .paste-row {
+          display: flex;
+          gap: 8px;
+          align-items: flex-start;
+        }
+        .paste-row textarea {
+          flex: 1;
+        }
+        .paste-row .btn-sm {
+          flex-shrink: 0;
+          margin-top: 0;
         }
         .empty-state {
           text-align: center;

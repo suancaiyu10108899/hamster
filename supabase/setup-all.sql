@@ -95,6 +95,25 @@ CREATE TABLE IF NOT EXISTS purchase_items (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- 8. BOM 模板表
+CREATE TABLE IF NOT EXISTS boms (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name        TEXT NOT NULL,
+    description TEXT,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 9. BOM 明细表
+CREATE TABLE IF NOT EXISTS bom_items (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    bom_id      UUID NOT NULL REFERENCES boms(id) ON DELETE CASCADE,
+    part_id     UUID REFERENCES parts(id) ON DELETE SET NULL,
+    quantity    INTEGER NOT NULL CHECK (quantity > 0),
+    sort_order  INTEGER NOT NULL DEFAULT 0,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT uq_bom_part UNIQUE (bom_id, part_id)
+);
+
 -- ============================================================
 -- 第二部分：索引
 -- ============================================================
@@ -158,6 +177,8 @@ ALTER PUBLICATION supabase_realtime ADD TABLE transactions;
 
 ALTER PUBLICATION supabase_realtime ADD TABLE purchases;
 ALTER PUBLICATION supabase_realtime ADD TABLE purchase_items;
+ALTER PUBLICATION supabase_realtime ADD TABLE boms;
+ALTER PUBLICATION supabase_realtime ADD TABLE bom_items;
 
 -- purchases RLS
 ALTER TABLE purchases ENABLE ROW LEVEL SECURITY;
@@ -169,11 +190,25 @@ ALTER TABLE purchase_items ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "anon_all" ON purchase_items;
 CREATE POLICY "anon_all" ON purchase_items FOR ALL USING (true) WITH CHECK (true);
 
+-- boms RLS
+ALTER TABLE boms ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_all" ON boms;
+CREATE POLICY "anon_all" ON boms FOR ALL USING (true) WITH CHECK (true);
+
+-- bom_items RLS
+ALTER TABLE bom_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_all" ON bom_items;
+CREATE POLICY "anon_all" ON bom_items FOR ALL USING (true) WITH CHECK (true);
+
 -- 采购表索引
 CREATE INDEX IF NOT EXISTS idx_purchases_date ON purchases(purchase_date DESC);
 CREATE INDEX IF NOT EXISTS idx_purchases_operator ON purchases(operator);
 CREATE INDEX IF NOT EXISTS idx_purchase_items_purchase ON purchase_items(purchase_id);
 CREATE INDEX IF NOT EXISTS idx_purchase_items_part ON purchase_items(part_id);
+
+-- BOM 表索引
+CREATE INDEX IF NOT EXISTS idx_bom_items_bom ON bom_items(bom_id);
+CREATE INDEX IF NOT EXISTS idx_bom_items_part ON bom_items(part_id);
 
 -- ============================================================
 -- 第五部分：预置数据
@@ -234,6 +269,6 @@ AND NOT EXISTS (SELECT 1 FROM categories c JOIN categories p ON c.parent_id = p.
 -- ============================================================
 -- 执行后请验证：
 -- SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;
--- 应该看到：categories, locations, parts, custom_fields, transactions
+-- 应该看到：categories, locations, parts, custom_fields, transactions, purchases, purchase_items, boms, bom_items
 -- 
 -- 然后返回命令行，我来继续修复代码和部署

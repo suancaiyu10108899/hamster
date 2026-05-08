@@ -190,13 +190,16 @@ CREATE INDEX idx_transactions_type ON transactions(type);
 
 ```sql
 CREATE TABLE purchases (
-    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    purchase_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    total_amount  DECIMAL(10,2),
-    link          TEXT,
-    remark        TEXT,
-    operator      TEXT NOT NULL DEFAULT '我',
-    created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    purchase_date   DATE NOT NULL DEFAULT CURRENT_DATE,
+    total_amount    DECIMAL(10,2),
+    link            TEXT,
+    reimbursed      BOOLEAN NOT NULL DEFAULT false,
+    paid_by         TEXT,
+    purchase_intent TEXT,
+    remark          TEXT,
+    operator        TEXT NOT NULL DEFAULT '我',
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```
 
@@ -223,6 +226,51 @@ CREATE INDEX idx_purchase_items_part ON purchase_items(part_id);
 2. 提交时：创建 `purchases` 记录 → 批量创建 `purchase_items`
 3. 系统为每个 `purchase_item` 自动创建一条 `transactions(type='in')` 记录
 4. 触发库存更新（Supabase Edge Function 或应用层事务）
+
+
+### 3.3 boms（BOM 模板表）
+
+```sql
+CREATE TABLE boms (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name        TEXT NOT NULL,
+    description TEXT,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+
+### 3.4 bom_items（BOM 明细表）
+
+```sql
+CREATE TABLE bom_items (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    bom_id      UUID NOT NULL REFERENCES boms(id) ON DELETE CASCADE,
+    part_id     UUID REFERENCES parts(id) ON DELETE SET NULL,
+    quantity    INTEGER NOT NULL CHECK (quantity > 0),
+    sort_order  INTEGER NOT NULL DEFAULT 0,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    
+    CONSTRAINT uq_bom_part UNIQUE (bom_id, part_id)
+);
+
+CREATE INDEX idx_bom_items_bom ON bom_items(bom_id);
+CREATE INDEX idx_bom_items_part ON bom_items(part_id);
+```
+
+**BOM 使用场景：**
+- 一个 BOM 模板包含多个零件项（如"舵机套件"包含 SG90 × 2、MG90S × 1）
+- 支持从 Excel 粘贴批量解析型号
+- `part_id` 可为 NULL：允许保存未匹配到零件的行（后续手动关联）
+- 出库时按倍数批量扣减库存（BomCheckoutPage）
+
+**RLS 策略：**
+```sql
+ALTER TABLE boms ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "anon_all" ON boms FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE bom_items ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "anon_all" ON bom_items FOR ALL USING (true) WITH CHECK (true);
+```
 
 ---
 
@@ -303,10 +351,14 @@ ORDER BY (min_quantity - quantity) DESC;
 需要启用实时推送的表：
 - `parts` — 库存变化
 - `transactions` — 新操作记录
+- `boms` — BOM 模板变更
+- `bom_items` — BOM 明细变更
 
 ```sql
 ALTER PUBLICATION supabase_realtime ADD TABLE parts;
 ALTER PUBLICATION supabase_realtime ADD TABLE transactions;
+ALTER PUBLICATION supabase_realtime ADD TABLE boms;
+ALTER PUBLICATION supabase_realtime ADD TABLE bom_items;
 ```
 
 ---
@@ -326,7 +378,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE transactions;
 
 ---
 
-## 八、完整表清单（总计 9 张）
+## 八、完整表清单（总计 11 张）
 
 | 序号 | 表名 | 优先级 | 说明 |
 |------|------|:--:|------|
@@ -337,5 +389,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE transactions;
 | 5 | transactions | P0 | 出入库记录 |
 | 6 | purchases | P1 | 采购记录 |
 | 7 | purchase_items | P1 | 采购明细 |
-| 8 | part_groups | P2 | 替代组 |
-| 9 | part_group_members | P2 | 替代组成员 |
+| 8 | boms | P1 | BOM 模板 |
+| 9 | bom_items | P1 | BOM 明细 |
+| 10 | part_groups | P2 | 替代组 |
+| 11 | part_group_members | P2 | 替代组成员 |

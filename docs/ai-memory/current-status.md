@@ -62,16 +62,24 @@
 5. **路由注册**：`src/App.tsx` 新增 `/bom` 和 `/bom/:id/checkout` 路由 + 底部导航
 6. **开发日志**：`docs/devlog/2026-05-07-excel-batch-checkout.md`
 
-## 2026-05-08 新增：BOM 反馈修复
+## 2026-05-08：BOM 反馈修复 + 文档同步 + Bug 修整
 
-基于 Barry 测试反馈，修复了 4 个问题：
+基于 Barry 测试反馈，进行了以下工作：
+
+### Bug 修复 & 功能优化
 1. **数据库变更**：`bom_items.part_id` 从 NOT NULL 改为可 NULL，允许保存未匹配零件
-2. **BomPage**：添加清空按钮 + 允许未匹配行保存 + 粘贴区 UI 间距优化
+2. **BomPage**：添加清空按钮 + 允许未匹配行保存 + 粘贴区 UI 间距优化（`.paste-row` flex 布局）
 3. **BomCheckoutPage**：出库时过滤掉未匹配零件（part_id 为 NULL 的跳过）
 4. **第二次修复**：移除「必须有匹配零件才能创建」的限制——所有解析行都保存，未匹配的 `part_id=null`，保存后提示用户有几条未匹配
-5. **文档**：`docs/devlog/2026-05-08-bom-feedback-fixes.md`
+5. **PartDetailPage bug 修复**：报废类型显示从原始 `scrap` 修正为中文「报废」（带 emoji 🗑️）
 
-⚠️ **数据库待部署**：需要在 Supabase Dashboard 执行：
+### 文档同步
+6. `docs/product/requirements.md`——P0/P1/P2 状态全面更新（BOM/realtime/导出/报废/位置管理等均已标记完成）
+7. `docs/ai-memory/current-status.md`——本次更新
+8. `docs/devlog/2026-05-08-bom-feedback-fixes.md`——已存在
+
+### ⚠️ 数据库待部署
+需要在 Supabase Dashboard 手动执行：
 ```sql
 ALTER TABLE bom_items ALTER COLUMN part_id DROP NOT NULL;
 ```
@@ -80,9 +88,15 @@ ALTER TABLE bom_items ALTER COLUMN part_id DROP NOT NULL;
 
 - [ ] 队友试用反馈收集
 - [ ] 零件照片上传（Supabase Storage）
+- [ ] 扫码出入库
+- [ ] EAV 自定义字段 UI
 - [ ] PWA 离线支持
+- [ ] 数据统计（消耗趋势图表）
+- [ ] 零件替代关系 UI（part_groups 表已存在）
+- [ ] TypeScript 严格模式 + 编译错误清零
+- [ ] Supabase 迁移：`bom_items.part_id NOT NULL` 约束去除（需手动执行 SQL）
 - [ ] Phase 3：Qt 桌面版
-- [ ] 数据导出功能（CSV 备份）
+- [ ] CSV 导出功能验证（⚠️ PartsPage 已有导出按钮，需端到端验证）
 
 ## 关键决策记录
 
@@ -95,14 +109,17 @@ ALTER TABLE bom_items ALTER COLUMN part_id DROP NOT NULL;
 | 采购记录独立表 | ✅ | 2026-05-06 实现 |
 | 数据库迁移执行确认流程 | ✅ | 2026-05-06 建立 |
 | BOM 批量出库 | ✅ | 2026-05-08 完成（含反馈修复） |
+| CSV 导出 | ✅ | 2026-05-07 PartsPage 导出按钮 |
 
 ## 下次会话任务
 
-1. 队友试用反馈收集与分析
-2. 零件照片上传（Supabase Storage）
-3. 数据导出功能（CSV 备份）
-4. PWA 离线支持调研
-5. **教学会话：从零全面详解项目**（进行中）——详见 `docs/personal-learning/hamster-zero-to-full-understanding.md`
+1. **TypeScript 编译检查与清理**：根除警告/隐式 any（或先关闭 strict 求可用）
+2. **队友试用反馈收集与分析**
+3. **Supabase DB 迁移执行**：手动执行 `ALTER TABLE bom_items ALTER COLUMN part_id DROP NOT NULL;`
+4. **完整功能走测试**：Import / CSV导出 / 采购入库 / BOM创建出库 端到端验证
+5. 零件照片上传（Supabase Storage）
+6. PWA 离线支持调研
+7. **教学会话：从零全面详解项目**（进行中）——详见 `docs/personal-learning/hamster-zero-to-full-understanding.md`
 
 ## 2026-05-07 新增：从零教学文档
 

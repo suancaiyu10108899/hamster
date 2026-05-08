@@ -211,7 +211,7 @@ export default function PartDetailPage() {
           {transactions.map((tx) => (
             <div key={tx.id} className="detail-row" style={{ fontSize: 14 }}>
               <span>
-                {tx.type === 'in' ? '📥' : tx.type === 'out' ? '📤' : '🔄'} {tx.type === 'in' ? '入库' : tx.type === 'out' ? '出库' : tx.type}
+                {tx.type === 'in' ? '📥' : tx.type === 'out' ? '📤' : '🗑️'} {tx.type === 'in' ? '入库' : tx.type === 'out' ? '出库' : '报废'}
               </span>
               <span style={{ fontWeight: 600, color: tx.type === 'in' ? '#4caf50' : '#ff6b35' }}>
                 {tx.type === 'in' ? '+' : tx.type === 'out' ? '-' : ''}{tx.quantity}
