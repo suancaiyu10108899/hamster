@@ -78,20 +78,15 @@
 7. `docs/ai-memory/current-status.md`——本次更新
 8. `docs/devlog/2026-05-08-bom-feedback-fixes.md`——已存在
 
-### ⚠️ 数据库待部署
-需要在 Supabase Dashboard 手动执行：
-```sql
-ALTER TABLE bom_items ALTER COLUMN part_id DROP NOT NULL;
-```
-
-**2026-05-08 更新**：用户已确认执行。
+### ✅ DB 迁移已部署
+`ALTER TABLE bom_items ALTER COLUMN part_id DROP NOT NULL;` ——已执行，无需再次操作。
 
 ## 待完成
 
 ### 🔴 短期（本周）
 
 - [ ] 队友试用反馈收集
-- [ ] Git commit + push（文档更新）
+- [ ] Git commit + push（本次变更）
 
 ### 🟡 中期（P1 剩余 + P2）
 
@@ -106,13 +101,15 @@ ALTER TABLE bom_items ALTER COLUMN part_id DROP NOT NULL;
 - [ ] 数据统计（消耗趋势图表）
 - [ ] Phase 3：Qt 桌面版
 
-### ✅ 本次会话已完成（2026-05-08 文档同步 + 状态整理）
+### ✅ 本次会话已完成（2026-05-08 管理员功能标注 + 文档对齐）
 
-- [x] Git push（5cc1877 = origin/master ✅）
-- [x] DB 迁移：`bom_items.part_id DROP NOT NULL`（用户已执行 ✅）
-- [x] README.md 功能列表更新（补充 BOM/采购/导出/仓库层级）
-- [x] development-roadmap.md 修复过时标记（Realtime/P1/P2 状态）
-- [x] current-status.md 本次更新
+- [x] ImportPage 添加 🔧管理员专用功能 横幅
+- [x] SettingsPage 添加 🔧管理员专用功能 横幅
+- [x] PartsPage 批量操作栏添加 ⚠️管理功能 标签
+- [x] PartsPage 头部新增 📥批量导入 入口按钮
+- [x] 新建 devlog/2026-05-08-batch-and-docs.md
+- [x] 更新 requirements.md / development-roadmap.md / current-status.md
+- [x] 更新 devlog/INDEX.md
 
 ## 关键决策记录
 

@@ -48,7 +48,7 @@ export default function App() {
             <span className="nav-label">采购</span>
           </a>
           <a href="/bom" className="nav-item">
-            <span className="nav-icon">📋</span>
+            <span className="nav-icon">📦</span>
             <span className="nav-label">BOM</span>
           </a>
           <a href="/settings" className="nav-item">

@@ -19,6 +19,10 @@ export default function PartsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchTargetLocationId, setBatchTargetLocationId] = useState('');
   const [batchMoving, setBatchMoving] = useState(false);
+  const [batchDeleting, setBatchDeleting] = useState(false);
+  const [batchOutQty, setBatchOutQty] = useState(1);
+  const [batchOuting, setBatchOuting] = useState(false);
+  const [batchScrapping, setBatchScrapping] = useState(false);
 
   useEffect(() => {
     loadParts();
@@ -140,6 +144,155 @@ export default function PartsPage() {
     }
   }
 
+  // 批量删除零件
+  async function batchDelete() {
+    if (selectedIds.size === 0) return;
+    const count = selectedIds.size;
+    const confirmed = window.confirm(`确定要删除 ${count} 个零件吗？\n\n此操作不可撤销，将同时删除以下关联数据：\n• 操作日志 (transactions)\n• 自定义字段 (custom_fields)\n• BOM 明细 (bom_items)\n• 采购明细 (purchase_items)\n• 替代组成员 (part_group_members)`);
+    if (!confirmed) return;
+
+    setBatchDeleting(true);
+    try {
+      const ids = Array.from(selectedIds);
+      const { error: err } = await supabase
+        .from('parts')
+        .delete()
+        .in('id', ids);
+
+      if (err) {
+        alert('删除失败：' + err.message);
+      } else {
+        setSelectedIds(new Set());
+        setBatchTargetLocationId('');
+        loadParts();
+      }
+    } catch (e: any) {
+      alert('删除失败：' + e.message);
+    } finally {
+      setBatchDeleting(false);
+    }
+  }
+
+  function getOperator(): string {
+    return localStorage.getItem('hamster_operator') || '我';
+  }
+
+  // 批量报废：选中零件库存归零 + 写入 scrap 记录
+  async function batchScrap() {
+    if (selectedIds.size === 0) return;
+    const count = selectedIds.size;
+    const confirmed = window.confirm(
+      `确定要报废 ${count} 个零件的全部库存吗？\n\n此操作不可撤销，将把每个选中零件的库存归零并记录报废。`
+    );
+    if (!confirmed) return;
+
+    setBatchScrapping(true);
+    const selectedParts = parts.filter((p) => selectedIds.has(p.id));
+    const now = new Date().toISOString();
+    const operator = getOperator();
+    const txRows: { part_id: string; type: string; quantity: number; operator: string; remark: string }[] = [];
+    const skipped: string[] = [];
+
+    for (const p of selectedParts) {
+      if (p.quantity <= 0) {
+        skipped.push(p.name);
+        continue;
+      }
+      txRows.push({
+        part_id: p.id,
+        type: 'scrap',
+        quantity: p.quantity,
+        operator,
+        remark: '批量报废',
+      });
+    }
+
+    try {
+      // 批量归零库存
+      const ids = Array.from(selectedIds);
+      await supabase.from('parts').update({ quantity: 0, updated_at: now }).in('id', ids);
+
+      // 批量写交易记录
+      if (txRows.length > 0) {
+        await supabase.from('transactions').insert(txRows);
+      }
+    } catch (e: any) {
+      alert('报废失败：' + e.message);
+      return;
+    } finally {
+      setBatchScrapping(false);
+    }
+
+    let msg = `✅ 已报废 ${txRows.length} 个零件的库存（共 ${txRows.reduce((s, t) => s + t.quantity, 0)} 个单位）`;
+    if (skipped.length > 0) {
+      msg += `\n\n⚠️ 以下零件库存为 0，已跳过：\n${skipped.join('、')}`;
+    }
+    alert(msg);
+    setSelectedIds(new Set());
+    setBatchTargetLocationId('');
+    loadParts();
+  }
+
+  // 批量出库：选中零件统一扣减数量 + 写 out 记录
+  async function batchCheckout() {
+    if (selectedIds.size === 0 || batchOutQty <= 0) return;
+    const qty = batchOutQty;
+    const confirmed = window.confirm(
+      `确定对 ${selectedIds.size} 个零件各出库 ${qty} 个单位吗？\n\n库存不足的零件将被跳过。`
+    );
+    if (!confirmed) return;
+
+    setBatchOuting(true);
+    const selectedParts = parts.filter((p) => selectedIds.has(p.id));
+    const now = new Date().toISOString();
+    const operator = getOperator();
+    const txRows: { part_id: string; type: string; quantity: number; operator: string; remark: string }[] = [];
+    const updates: { id: string; newQty: number }[] = [];
+    const skipped: string[] = [];
+
+    for (const p of selectedParts) {
+      if (p.quantity < qty) {
+        skipped.push(`${p.name}（库存${p.quantity}）`);
+        continue;
+      }
+      updates.push({ id: p.id, newQty: p.quantity - qty });
+      txRows.push({
+        part_id: p.id,
+        type: 'out',
+        quantity: qty,
+        operator,
+        remark: `批量出库 ×${qty}`,
+      });
+    }
+
+    try {
+      // 逐个更新库存（Supabase 不支持批量不同值 update）
+      for (const u of updates) {
+        await supabase.from('parts').update({ quantity: u.newQty, updated_at: now }).eq('id', u.id);
+      }
+
+      // 批量写交易记录
+      if (txRows.length > 0) {
+        await supabase.from('transactions').insert(txRows);
+      }
+    } catch (e: any) {
+      alert('出库失败：' + e.message);
+      return;
+    } finally {
+      setBatchOuting(false);
+    }
+
+    let msg = `✅ 已对 ${updates.length} 个零件各出库 ${qty} 个单位`;
+    if (skipped.length > 0) {
+      msg += `\n\n⚠️ 以下零件库存不足，已跳过：\n${skipped.join('\n')}`;
+    }
+    alert(msg);
+    setSelectedIds(new Set());
+    setBatchTargetLocationId('');
+    setBatchOutQty(1);
+    loadParts();
+  }
+
   // 递归构建位置缩进选项
   function buildLocationOptions(locs: Location[], parentId: string | null = null, depth: number = 0): JSX.Element[] {
     const children = locs.filter((l) => l.parent_id === parentId);
@@ -186,11 +339,19 @@ export default function PartsPage() {
         <h1>📦 零件</h1>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
+            className="btn"
+            onClick={() => navigate('/import')}
+            style={{ background: '#e3f2fd', color: '#1565c0', border: '1px solid #bbdefb' }}
+            title="批量导入（管理员）"
+          >
+            📥 批量导入
+          </button>
+          <button
             className="btn btn-secondary"
             onClick={() => exportPartsCSV(filtered, allLocations)}
             title="导出为 CSV（包含筛选结果）"
           >
-            📥 导出
+            📤 导出
           </button>
           <button className="btn btn-primary" onClick={() => navigate('/parts/new')}>
             ➕ 添加
@@ -278,6 +439,7 @@ export default function PartsPage() {
           <span style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap' }}>
             ✅ 已选 {selectedIds.size} 个零件
           </span>
+          <span style={{ fontSize: 11, color: '#999' }}>⚠️ 管理功能</span>
           <select
             value={batchTargetLocationId}
             onChange={(e) => setBatchTargetLocationId(e.target.value)}
@@ -300,6 +462,59 @@ export default function PartsPage() {
             style={{ fontSize: 13, padding: '6px 14px' }}
           >
             取消选择
+          </button>
+          {/* 批量出库：数量输入 + 按钮 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', borderRadius: 6, padding: '2px 6px', border: '1px solid #ddd' }}>
+            <span style={{ fontSize: 12, color: '#888', whiteSpace: 'nowrap' }}>出库数量</span>
+            <input
+              type="number"
+              min={1}
+              value={batchOutQty}
+              onChange={(e) => setBatchOutQty(parseInt(e.target.value) || 1)}
+              style={{ width: 52, padding: '4px 4px', border: '1px solid #ddd', borderRadius: 4, fontSize: 13, textAlign: 'center' }}
+            />
+            <button
+              onClick={batchCheckout}
+              disabled={batchOuting || batchOutQty <= 0}
+              style={{
+                fontSize: 13,
+                padding: '6px 12px',
+                background: '#f44336',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                opacity: (batchOuting || batchOutQty <= 0) ? 0.6 : 1,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {batchOuting ? '出库中...' : `📤 批量出库 (${selectedIds.size})`}
+            </button>
+          </div>
+          <button
+            onClick={batchScrap}
+            disabled={batchScrapping}
+            style={{
+              fontSize: 13,
+              padding: '6px 14px',
+              background: '#9e9e9e',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer',
+              opacity: batchScrapping ? 0.6 : 1,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {batchScrapping ? '报废中...' : `🗑️ 批量报废 (${selectedIds.size})`}
+          </button>
+          <button
+            className="btn btn-danger"
+            disabled={batchDeleting}
+            onClick={batchDelete}
+            style={{ fontSize: 13, padding: '6px 14px', background: '#ff4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+          >
+            {batchDeleting ? '删除中...' : `💥 删除 (${selectedIds.size})`}
           </button>
         </div>
       )}

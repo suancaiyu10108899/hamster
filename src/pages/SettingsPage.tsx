@@ -13,6 +13,7 @@ export default function SettingsPage() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState('');
+  const [clearingAll, setClearingAll] = useState(false);
 
   // Form state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -138,6 +139,84 @@ export default function SettingsPage() {
     return parent ? `${parent.code} ${parent.label || ''}` : '';
   }
 
+  // 一键清空所有测试数据
+  async function clearAllData() {
+    const input = window.prompt(
+      '⚠️ 此操作将永久删除所有数据，不可撤销！\n\n将清空：零件、交易流水、BOM、采购、分类、位置\n\n请输入"确认清空"以继续：'
+    );
+    if (input !== '确认清空') {
+      setToast('已取消，未做任何修改');
+      setTimeout(() => setToast(''), 2000);
+      return;
+    }
+
+    setClearingAll(true);
+    setToast('🔄 正在清空所有数据...');
+
+    try {
+      // 按外键依赖顺序删除（先删子表，再删主表）
+      await supabase.from('transactions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('purchase_items').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('purchases').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('bom_items').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('boms').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('parts').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('categories').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('locations').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+      // 重建默认分类
+      const defaultCategories = [
+        { name: '电阻', sort_order: 1 },
+        { name: '电容', sort_order: 2 },
+        { name: '电感', sort_order: 3 },
+        { name: '二极管', sort_order: 4 },
+        { name: '三极管', sort_order: 5 },
+        { name: 'IC / 芯片', sort_order: 6 },
+        { name: '连接器', sort_order: 7 },
+        { name: '传感器', sort_order: 8 },
+        { name: '其他', sort_order: 9 },
+      ];
+      await supabase.from('categories').insert(defaultCategories);
+
+      // 重建默认仓库体系（复用一键初始化逻辑）
+      const wh1 = { code: 'A1', label: '主仓库', parent_id: null };
+      const wh2 = { code: 'B1', label: '备件仓库', parent_id: null };
+      const { data: whData } = await supabase.from('locations').insert([wh1, wh2]).select('id');
+      if (!whData || whData.length < 2) {
+        setToast('⚠️ 数据已清空，但仓库重建失败，请手动初始化');
+        setTimeout(() => setToast(''), 3000);
+        return;
+      }
+      const wh1Id = whData[0].id;
+      const wh2Id = whData[1].id;
+      const children = [
+        { code: 'A1-1', label: 'A1 1号货架', parent_id: wh1Id },
+        { code: 'A1-2', label: 'A1 2号货架', parent_id: wh1Id },
+        { code: 'A1-3', label: 'A1 3号货架', parent_id: wh1Id },
+        { code: 'B1-1', label: 'B1 1号货架', parent_id: wh2Id },
+        { code: 'B1-2', label: 'B1 2号货架', parent_id: wh2Id },
+      ];
+      const { data: shelves } = await supabase.from('locations').insert(children).select('id,code');
+      if (shelves && shelves.length > 0) {
+        const bins = [];
+        for (const s of shelves) {
+          for (let i = 1; i <= 4; i++) {
+            bins.push({ code: `${s.code}-${String(i).padStart(2, '0')}`, label: `层${i}`, parent_id: s.id });
+          }
+        }
+        await supabase.from('locations').insert(bins);
+      }
+
+      setToast('✅ 所有数据已清空，并重建了默认分类和仓库体系');
+    } catch (e: any) {
+      setToast('❌ 清空失败：' + e.message);
+    } finally {
+      setClearingAll(false);
+      loadData();
+      setTimeout(() => setToast(''), 3000);
+    }
+  }
+
   // 构建位置树（顶层 → 子级递归）
   const locationTree = useMemo(() => {
     const map = new Map<string, Location & { children: (Location & { children: any[] })[] }>();
@@ -250,6 +329,18 @@ export default function SettingsPage() {
       <div className="page-header">
         <h1>⚙️ 设置</h1>
       </div>
+      <div style={{
+        margin: '0 16px 12px',
+        padding: '8px 14px',
+        background: '#e3f2fd',
+        borderLeft: '4px solid #2196f3',
+        borderRadius: 6,
+        fontSize: 13,
+        color: '#1565c0',
+        fontWeight: 500,
+      }}>
+        🔧 管理员专用功能
+      </div>
 
       {/* Tabs */}
       <div className="settings-tabs">
@@ -264,6 +355,33 @@ export default function SettingsPage() {
           onClick={() => { setTab('locations'); resetForm(); }}
         >
           📍 位置管理
+        </button>
+      </div>
+
+      {/* 一键清空数据（始终可见，不受 tab 影响） */}
+      <div className="settings-form" style={{ background: '#fff5f5', border: '2px solid #ff4444', margin: '0 16px 16px' }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: '#cc0000', marginBottom: 8 }}>
+          🚨 危险操作区
+        </div>
+        <div style={{ fontSize: 13, color: '#666', marginBottom: 8 }}>
+          一键清空所有数据并重建默认分类和仓库体系。所有零件、交易、BOM、采购记录将被永久删除，不可撤销！
+        </div>
+        <button
+          onClick={clearAllData}
+          disabled={clearingAll}
+          style={{
+            width: '100%',
+            padding: '10px 16px',
+            background: clearingAll ? '#ddd' : '#ff4444',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 8,
+            fontSize: 15,
+            fontWeight: 600,
+            cursor: clearingAll ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {clearingAll ? '🔄 正在清空...' : '💣 一键清空所有测试数据'}
         </button>
       </div>
 

@@ -352,6 +352,18 @@ export default function ImportPage() {
       <div className="page-header">
         <h1>📥 批量导入</h1>
       </div>
+      <div style={{
+        margin: '0 16px 12px',
+        padding: '8px 14px',
+        background: '#e3f2fd',
+        borderLeft: '4px solid #2196f3',
+        borderRadius: 6,
+        fontSize: 13,
+        color: '#1565c0',
+        fontWeight: 500,
+      }}>
+        🔧 管理员专用功能
+      </div>
 
       {message && (
         <div className={`toast`} style={{ position: 'relative', top: 0, marginBottom: 12, background: message.type === 'success' ? '#4caf50' : '#ff6b35' }}>

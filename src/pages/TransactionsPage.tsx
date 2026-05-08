@@ -10,9 +10,18 @@ export default function TransactionsPage() {
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 30;
 
+  // 批量删除状态
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [batchDeleting, setBatchDeleting] = useState(false);
+
   useEffect(() => {
     loadTransactions();
   }, [filter, page]);
+
+  useEffect(() => {
+    // 翻页/筛选时清空选中
+    setSelectedIds(new Set());
+  }, [filter, page, search]);
 
   async function loadTransactions() {
     setLoading(true);
@@ -57,6 +66,56 @@ export default function TransactionsPage() {
     }
   };
 
+  function toggleSelect(txId: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(txId)) {
+        next.delete(txId);
+      } else {
+        next.add(txId);
+      }
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === filtered.length && filtered.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((t) => t.id)));
+    }
+  }
+
+  async function batchDelete() {
+    if (selectedIds.size === 0) return;
+    const confirmed = window.confirm(
+      `确定要删除 ${selectedIds.size} 条操作记录吗？\n\n⚠️ 此操作不可撤销，删除后零件库存数量将恢复为删除前状态。\n建议使用「报废」类型来记录正常淘汰。`
+    );
+    if (!confirmed) return;
+
+    setBatchDeleting(true);
+    try {
+      const ids = Array.from(selectedIds);
+      const { error: err } = await supabase
+        .from('transactions')
+        .delete()
+        .in('id', ids);
+
+      if (err) {
+        alert('删除失败：' + err.message);
+      } else {
+        setSelectedIds(new Set());
+        loadTransactions();
+      }
+    } catch (e: any) {
+      alert('删除失败：' + e.message);
+    } finally {
+      setBatchDeleting(false);
+    }
+  }
+
+  const hasSelection = selectedIds.size > 0;
+
   return (
     <div className="page">
       <div className="page-header">
@@ -98,6 +157,66 @@ export default function TransactionsPage() {
         />
       </div>
 
+      {/* 全选/批量操作栏 */}
+      {filtered.length > 0 && (
+        <div style={{
+          margin: '0 16px 8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          fontSize: 13,
+          color: '#666',
+          flexWrap: 'wrap',
+        }}>
+          <label style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <input
+              type="checkbox"
+              checked={selectedIds.size === filtered.length && filtered.length > 0}
+              onChange={toggleSelectAll}
+            />
+            {selectedIds.size === filtered.length ? '取消全选' : '全选当前列表'}
+          </label>
+          <span>({filtered.length} 条)</span>
+          {hasSelection && (
+            <>
+              <span style={{ fontWeight: 600, color: '#f44336' }}>
+                ✅ 已选 {selectedIds.size} 条
+              </span>
+              <button
+                onClick={batchDelete}
+                disabled={batchDeleting}
+                style={{
+                  padding: '4px 14px',
+                  borderRadius: 6,
+                  background: '#ff4444',
+                  color: '#fff',
+                  border: 'none',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  opacity: batchDeleting ? 0.6 : 1,
+                }}
+              >
+                {batchDeleting ? '删除中...' : `🗑️ 批量删除 (${selectedIds.size})`}
+              </button>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                style={{
+                  padding: '4px 12px',
+                  borderRadius: 6,
+                  background: '#f5f5f5',
+                  color: '#666',
+                  border: '1px solid #ddd',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                取消选择
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
       {/* 列表 */}
       <div style={{ padding: '0 16px 16px' }}>
         {loading ? (
@@ -119,12 +238,19 @@ export default function TransactionsPage() {
                     borderRadius: 8,
                     padding: '10px 12px',
                     marginBottom: 8,
-                    border: '1px solid #f0f0f0',
+                    border: selectedIds.has(tx.id) ? '2px solid #f44336' : '1px solid #f0f0f0',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 10,
                   }}
                 >
+                  {/* 复选框 */}
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(tx.id)}
+                    onChange={() => toggleSelect(tx.id)}
+                    style={{ width: 17, height: 17, cursor: 'pointer', flexShrink: 0 }}
+                  />
                   <span
                     style={{
                       display: 'inline-block',

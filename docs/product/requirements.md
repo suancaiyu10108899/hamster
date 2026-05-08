@@ -63,7 +63,7 @@ RM 战队零件管理现状痛点：
 
 ### 场景 5：比赛前零件清单导出（P1）— ✅ 已实现
 
-1. PartsPage 点击「📥 导出」按钮
+1. PartsPage 点击「📤 导出」按钮
 2. 导出当前筛选结果（名称、型号、分类、库存、位置等）为 CSV
 3. 发给队友确认
 
@@ -116,7 +116,7 @@ RM 战队零件管理现状痛点：
 - ✅ 采购入库：PurchasesPage 逐行添加 + 计算总价 + 一键入库
 - ✅ Realtime 实时推送：HomePage / PartsPage / PartDetailPage 均有 channel 订阅
 - ✅ BOM 物料清单：BomPage（CSV 解析 + 自动匹配零件 + BOM 列表）+ BomCheckoutPage 批量出库
-- ✅ CSV 导出：PartsPage「📥 导出」按钮导出筛选结果为 CSV
+- ✅ CSV 导出：PartsPage「📤 导出」按钮导出筛选结果为 CSV
 
 #### P2（第三版，锦上添花）— 🟡 部分完成
 
