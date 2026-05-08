@@ -81,6 +81,15 @@
 ### ✅ DB 迁移已部署
 `ALTER TABLE bom_items ALTER COLUMN part_id DROP NOT NULL;` ——已执行，无需再次操作。
 
+## 本次已完成（2026-05-08 零件照片功能）
+
+1. **Supabase Storage 迁移脚本**：`supabase/migrations/006-storage-parts-images.sql`——创建 `parts-images` bucket + RLS 策略
+2. **PartFormPage 照片上传**：相册选择 / 拍照（capture）、预览、5MB 验证、上传 Storage、删除/替换旧照片
+3. **PartDetailPage 显示照片**：库存卡片上方展示照片，点击新窗口打开原图
+4. **PartsPage 列表缩略图**：有照片显示缩略图 `.part-card-thumb`，无照片显示默认 emoji
+5. **CSS 样式补充**：`photo-upload-area`、`photo-preview`、`photo-actions`、`detail-photo`、`part-card-thumb`
+6. **开发日志**：`docs/devlog/2026-05-08-part-photos.md`
+
 ## 待完成
 
 ### 🔴 短期（本周）
@@ -90,7 +99,7 @@
 
 ### 🟡 中期（P1 剩余 + P2）
 
-- [ ] 零件照片上传（Supabase Storage）
+- [x] 零件照片上传（Supabase Storage）✅ 2026-05-08
 - [ ] 扫码出入库
 - [ ] EAV 自定义字段 UI
 - [ ] 零件替代关系 UI（part_groups 表已存在）

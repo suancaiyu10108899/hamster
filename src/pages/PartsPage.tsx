@@ -585,7 +585,16 @@ export default function PartsPage() {
                 cursor: 'pointer',
               }}
             >
-              <div className="part-card-emoji">📌</div>
+              {part.image_url ? (
+                <img
+                  src={part.image_url}
+                  alt={part.name}
+                  className="part-card-thumb"
+                  style={{ flexShrink: 0 }}
+                />
+              ) : (
+                <div className="part-card-emoji">📌</div>
+              )}
               <div className="part-card-info">
                 <div className="part-card-name">{part.name}</div>
                 <div className="part-card-meta">

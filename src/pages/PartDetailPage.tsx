@@ -148,6 +148,19 @@ export default function PartDetailPage() {
         </button>
       </div>
 
+      {/* 零件照片 */}
+      {part.image_url && (
+        <div style={{ padding: '0 16px' }}>
+          <img
+            src={part.image_url}
+            alt={part.name}
+            className="detail-photo"
+            onClick={() => window.open(part.image_url!, '_blank')}
+            style={{ cursor: 'pointer' }}
+          />
+        </div>
+      )}
+
       {/* 库存概览 */}
       <div className="detail-card" style={{ textAlign: 'center' }}>
         <h2 style={{ fontSize: 40, fontWeight: 700, color: lowStock ? '#ff6b35' : '#333' }}>

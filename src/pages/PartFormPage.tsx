@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import type { Part, Category, Location } from '@/types';
@@ -19,6 +19,15 @@ export default function PartFormPage() {
   const [supplier, setSupplier] = useState('');
   const [barcode, setBarcode] = useState('');
   const [remark, setRemark] = useState('');
+
+  // 照片状态
+  const [imagePreview, setImagePreview] = useState<string | null>(null); // 本地预览 (dataURL)
+  const [imageFile, setImageFile] = useState<File | null>(null);          // 待上传的文件
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null); // 已保存的照片 URL
+  const [imageChanged, setImageChanged] = useState(false);                // 照片是否被改动
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -109,7 +118,103 @@ export default function PartFormPage() {
       setSupplier(data.supplier || '');
       setBarcode(data.barcode || '');
       setRemark(data.remark || '');
+      // 加载已有照片
+      if (data.image_url) {
+        setExistingImageUrl(data.image_url);
+        setImagePreview(data.image_url); // 用 URL 做预览
+      }
     }
+  }
+
+  // 选择照片（相册）
+  function handleSelectPhoto() {
+    fileInputRef.current?.click();
+  }
+
+  // 拍照
+  function handleTakePhoto() {
+    cameraInputRef.current?.click();
+  }
+
+  // 处理文件选择
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 验证文件类型
+    if (!file.type.startsWith('image/')) {
+      setToast('请选择图片文件');
+      setTimeout(() => setToast(''), 2000);
+      return;
+    }
+
+    // 验证文件大小 (最大 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setToast('图片大小不能超过 5MB');
+      setTimeout(() => setToast(''), 2000);
+      return;
+    }
+
+    // 生成预览
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setImagePreview(ev.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    setImageFile(file);
+    setImageChanged(true);
+  }
+
+  // 清除照片
+  function handleRemovePhoto() {
+    setImagePreview(null);
+    setImageFile(null);
+    setExistingImageUrl(null);
+    setImageChanged(true);
+  }
+
+  // 上传照片到 Supabase Storage
+  // 返回 public URL 或 null
+  async function uploadImage(partId: string): Promise<string | null> {
+    if (!imageFile) {
+      // 如果清除了照片（imageChanged && !imageFile && !imagePreview）
+      if (imageChanged && !imagePreview) {
+        // 删除旧照片
+        if (existingImageUrl) {
+          const oldPath = existingImageUrl.split('/').slice(-2).join('/');
+          await supabase.storage.from('parts-images').remove([oldPath]);
+        }
+        return null;
+      }
+      // 没有改动 -> 保留原有 URL
+      return existingImageUrl;
+    }
+
+    // 删除旧照片（如果存在）
+    if (existingImageUrl) {
+      const oldPath = existingImageUrl.split('/').slice(-2).join('/');
+      await supabase.storage.from('parts-images').remove([oldPath]);
+    }
+
+    // 上传新照片: 文件路径为 {partId}.{ext}
+    const ext = imageFile.name.split('.').pop() || 'jpg';
+    const filePath = `${partId}.${ext}`;
+
+    const { error: uploadErr } = await supabase.storage
+      .from('parts-images')
+      .upload(filePath, imageFile, { upsert: true });
+
+    if (uploadErr) {
+      throw new Error('照片上传失败: ' + uploadErr.message);
+    }
+
+    // 获取公开 URL
+    const { data: urlData } = supabase.storage
+      .from('parts-images')
+      .getPublicUrl(filePath);
+
+    return urlData.publicUrl;
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -121,46 +226,79 @@ export default function PartFormPage() {
     }
 
     setLoading(true);
+    setUploading(true);
 
-    const payload = {
-      name: name.trim(),
-      model_number: modelNumber.trim() || null,
-      category_id: categoryId || null,
-      location_id: locationId || null,
-      quantity,
-      min_quantity: minQuantity === '' ? null : minQuantity,
-      unit: unit.trim() || '个',
-      supplier: supplier.trim() || null,
-      barcode: barcode.trim() || null,
-      remark: remark.trim() || null,
-      updated_at: new Date().toISOString(),
-    };
+    try {
+      // 先保存零件（如果有照片改动需要先有 part ID）
+      if (!isEdit) {
+        // 新建零件：先插入拿到 ID，再上传照片
+        const { data: newPart, error: insertErr } = await supabase
+          .from('parts')
+          .insert({
+            name: name.trim(),
+            model_number: modelNumber.trim() || null,
+            category_id: categoryId || null,
+            location_id: locationId || null,
+            quantity,
+            min_quantity: minQuantity === '' ? null : minQuantity,
+            unit: unit.trim() || '个',
+            supplier: supplier.trim() || null,
+            barcode: barcode.trim() || null,
+            remark: remark.trim() || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select('id')
+          .single();
 
-    let error: Error | null = null;
+        if (insertErr) throw new Error(insertErr.message);
+        const partId = newPart!.id;
 
-    if (isEdit && id) {
-      const { error: err } = await supabase
-        .from('parts')
-        .update(payload)
-        .eq('id', id);
-      error = err;
-    } else {
-      const { error: err } = await supabase
-        .from('parts')
-        .insert({
-          ...payload,
-          created_at: new Date().toISOString(),
-        });
-      error = err;
-    }
+        // 上传照片
+        if (imageFile) {
+          const photoUrl = await uploadImage(partId);
+          if (photoUrl) {
+            await supabase.from('parts').update({ image_url: photoUrl }).eq('id', partId);
+          }
+        }
+      } else {
+        // 编辑零件
+        const { error: updateErr } = await supabase
+          .from('parts')
+          .update({
+            name: name.trim(),
+            model_number: modelNumber.trim() || null,
+            category_id: categoryId || null,
+            location_id: locationId || null,
+            quantity,
+            min_quantity: minQuantity === '' ? null : minQuantity,
+            unit: unit.trim() || '个',
+            supplier: supplier.trim() || null,
+            barcode: barcode.trim() || null,
+            remark: remark.trim() || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', id!);
 
-    setLoading(false);
+        if (updateErr) throw new Error(updateErr.message);
 
-    if (error) {
-      setToast('保存失败: ' + error.message);
-      setTimeout(() => setToast(''), 2000);
-    } else {
-      navigate(-1);
+        // 上传照片（如果有改动）
+        if (imageChanged) {
+          const photoUrl = await uploadImage(id!);
+          await supabase.from('parts').update({ image_url: photoUrl }).eq('id', id!);
+        }
+      }
+
+      setToast(isEdit ? '✅ 修改已保存' : '✅ 零件已添加');
+      setTimeout(() => {
+        navigate(-1);
+      }, 800);
+    } catch (err: any) {
+      setToast('保存失败: ' + err.message);
+      setTimeout(() => setToast(''), 3000);
+    } finally {
+      setLoading(false);
+      setUploading(false);
     }
   }
 
@@ -180,6 +318,64 @@ export default function PartFormPage() {
       </div>
 
       <form onSubmit={handleSubmit} style={{ padding: '0 16px' }}>
+        {/* 照片上传区域 */}
+        <div className="photo-upload-area">
+          <label className="form-label">照片</label>
+          <div className={`photo-preview ${uploading ? 'photo-uploading' : ''}`}>
+            {imagePreview ? (
+              <img src={imagePreview} alt="零件照片" />
+            ) : (
+              <span className="placeholder">📷</span>
+            )}
+          </div>
+          <div className="photo-actions">
+            <button
+              type="button"
+              className="btn"
+              style={{ background: '#e3f2fd', color: '#1565c0' }}
+              onClick={handleSelectPhoto}
+              disabled={uploading}
+            >
+              🖼️ 相册
+            </button>
+            <button
+              type="button"
+              className="btn"
+              style={{ background: '#e8f5e9', color: '#2e7d32' }}
+              onClick={handleTakePhoto}
+              disabled={uploading}
+            >
+              📸 拍照
+            </button>
+            {imagePreview && (
+              <button
+                type="button"
+                className="btn"
+                style={{ background: '#ffebee', color: '#c62828' }}
+                onClick={handleRemovePhoto}
+                disabled={uploading}
+              >
+                🗑️ 删除
+              </button>
+            )}
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
+          />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
+          />
+        </div>
+
         <div className="form-group">
           <label className="form-label">名称 *</label>
           <input
@@ -305,7 +501,7 @@ export default function PartFormPage() {
 
         <div style={{ padding: '16px 0' }}>
           <button className="btn btn-primary btn-block btn-lg" type="submit" disabled={loading}>
-            {loading ? '保存中...' : isEdit ? '💾 保存修改' : '➕ 添加零件'}
+            {uploading ? '上传照片中...' : loading ? '保存中...' : isEdit ? '💾 保存修改' : '➕ 添加零件'}
           </button>
         </div>
       </form>
