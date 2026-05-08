@@ -58,9 +58,9 @@ Phase 0      Phase 1          Phase 2            Phase 3
 - 无 UI 组件库，纯手写 CSS
 
 **统计**：
-- 页面数：4 (Home / Parts / PartDetail / PartForm)
-- 数据库表：8 (categories, locations, parts, transactions, custom_fields, purchases, part_groups, part_group_members)
-- 代码行数：约 600 行 TSX + CSS
+- 页面数：11 (Home / Parts / PartDetail / PartForm / Import / Transactions / Purchases / Bom / BomCheckout / Settings)
+- 数据库表：12 (categories, locations, parts, transactions, custom_fields, purchases, purchase_items, part_groups, part_group_members, boms, bom_items)
+- 代码行数：约 3000+ 行 TSX + CSS
 
 ---
 
@@ -84,19 +84,21 @@ Phase 0      Phase 1          Phase 2            Phase 3
 
 **P1 候选功能（按优先级）**：
 
-| 优先级 | 功能 | 预计工时 | 价值 |
-|--------|------|---------|------|
-| 🔴 P0 | 队友反馈的最高频痛点 | 0.5-2h | 直接改善体验 |
-| 🟠 P1 | Realtime 实时推送 | 1-2h | 一入库立刻看到 |
+| 优先级 | 功能 | 预计工时 | 状态 |
+|--------|------|---------|:--:|
+| 🔴 P0 | 队友反馈的最高频痛点 | 0.5-2h | ⏳ 待反馈 |
+| 🟠 P1 | Realtime 实时推送 | 1-2h | ✅ 已完成 |
 | 🟠 P1 | 报废操作入口 | 30min | ✅ 已完成 |
 | 🟡 P1 | 库存预警标记 | 1h | ✅ 已完成 |
-| 🟡 P1 | 分类/位置管理 UI | 2h | 可动态添加 |
-| 🟡 P1 | 零件照片上传 | 3h | Supabase Storage |
-| 🟢 P2 | 扫码（相机读取条码） | 4h | 出入库加速 |
-| 🟢 P2 | 一键采购入库 | 3h | 买完一键导入 |
-| 🟢 P2 | CSV 导入导出 | 2h | 数据迁移/备份 |
-| 🔵 P3 | PWA 离线缓存 | 3h | 无网络也能查 |
-| 🔵 P3 | 零件替代组 UI | 2h | 相互替代推荐 |
+| 🟡 P1 | 分类/位置管理 UI + 仓库层级 | 4h | ✅ 已完成 |
+| 🟡 P1 | 一键采购入库 | 3h | ✅ 已完成 |
+| 🟡 P1 | CSV 导入 + 导出 | 2h | ✅ 已完成 |
+| 🟡 P1 | BOM 物料清单 + 批量出库 | 4h | ✅ 已完成 |
+| 🟢 P2 | 零件照片上传 | 3h | ⏳ Supabase Storage |
+| 🟢 P2 | 扫码（相机读取条码） | 4h | ❌ |
+| 🔵 P3 | PWA 离线缓存 | 3h | ❌ |
+| 🔵 P3 | 零件替代组 UI | 2h | ❌ |
+| 🔵 P3 | EAV 自定义字段 UI | 3h | ❌ |
 
 ---
 
@@ -123,7 +125,7 @@ Phase 0      Phase 1          Phase 2            Phase 3
 | 需求 | 优先级 | 预计 Phase | 状态 |
 |------|--------|-----------|:--:|
 | 响应式手机布局 | P0 | Phase 1 | ✅ |
-| Realtime 实时同步 | P1 | Phase 2 | ⏳ |
+| Realtime 实时同步 | P1 | Phase 2 | ✅ |
 | PWA 离线 | P3 | Phase 2-3 | ❌ |
 | Email 认证 | P4 | Phase 2+ | ❌ |
 | CI/CD 自动部署 | P4 | Phase 2+ | ❌ |

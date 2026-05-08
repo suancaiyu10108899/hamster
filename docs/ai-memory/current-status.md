@@ -84,19 +84,35 @@
 ALTER TABLE bom_items ALTER COLUMN part_id DROP NOT NULL;
 ```
 
+**2026-05-08 更新**：用户已确认执行。
+
 ## 待完成
 
+### 🔴 短期（本周）
+
 - [ ] 队友试用反馈收集
+- [ ] Git commit + push（文档更新）
+
+### 🟡 中期（P1 剩余 + P2）
+
 - [ ] 零件照片上传（Supabase Storage）
 - [ ] 扫码出入库
 - [ ] EAV 自定义字段 UI
+- [ ] 零件替代关系 UI（part_groups 表已存在）
+
+### 🟢 远期
+
 - [ ] PWA 离线支持
 - [ ] 数据统计（消耗趋势图表）
-- [ ] 零件替代关系 UI（part_groups 表已存在）
-- [ ] TypeScript 严格模式 + 编译错误清零
-- [ ] Supabase 迁移：`bom_items.part_id NOT NULL` 约束去除（需手动执行 SQL）
 - [ ] Phase 3：Qt 桌面版
-- [ ] CSV 导出功能验证（⚠️ PartsPage 已有导出按钮，需端到端验证）
+
+### ✅ 本次会话已完成（2026-05-08 文档同步 + 状态整理）
+
+- [x] Git push（5cc1877 = origin/master ✅）
+- [x] DB 迁移：`bom_items.part_id DROP NOT NULL`（用户已执行 ✅）
+- [x] README.md 功能列表更新（补充 BOM/采购/导出/仓库层级）
+- [x] development-roadmap.md 修复过时标记（Realtime/P1/P2 状态）
+- [x] current-status.md 本次更新
 
 ## 关键决策记录
 
