@@ -72,6 +72,18 @@ export default function HomePage() {
         </div>
       </div>
 
+      <details className="help-card" open>
+        <summary className="help-card-summary">📖 快速上手</summary>
+        <div className="help-card-body">
+          <div className="help-row">🔍 查找零件 → 底部「零件」搜索</div>
+          <div className="help-row">📥 入库补货 → 点零件 → 点绿色入库</div>
+          <div className="help-row">📤 取用出库 → 点零件 → 点红色出库</div>
+          <div className="help-row">📋 批量出库 → 底部「BOM」→ 粘贴清单</div>
+          <div className="help-row">🛒 查看采购 → 底部「采购」</div>
+          <div className="help-row">⚙️ 管理位置分类 → 底部「设置」</div>
+        </div>
+      </details>
+
       {/* 按仓库统计 */}
       {!loading && (() => {
         const topLevelLocs = allLocations.filter((l) => !l.parent_id);
