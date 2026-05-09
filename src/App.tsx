@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import PartsPage from './pages/PartsPage';
 import PartDetailPage from './pages/PartDetailPage';
@@ -31,30 +31,30 @@ export default function App() {
         </main>
 
         <nav className="bottom-nav">
-          <a href="/" className="nav-item">
+          <NavLink to="/" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'} end>
             <span className="nav-icon">🏠</span>
             <span className="nav-label">首页</span>
-          </a>
-          <a href="/parts" className="nav-item">
+          </NavLink>
+          <NavLink to="/parts" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
             <span className="nav-icon">🔩</span>
             <span className="nav-label">零件</span>
-          </a>
-          <a href="/transactions" className="nav-item">
+          </NavLink>
+          <NavLink to="/transactions" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
             <span className="nav-icon">📋</span>
             <span className="nav-label">日志</span>
-          </a>
-          <a href="/purchases" className="nav-item">
+          </NavLink>
+          <NavLink to="/purchases" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
             <span className="nav-icon">💰</span>
             <span className="nav-label">采购</span>
-          </a>
-          <a href="/bom" className="nav-item">
+          </NavLink>
+          <NavLink to="/bom" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
             <span className="nav-icon">📦</span>
             <span className="nav-label">BOM</span>
-          </a>
-          <a href="/settings" className="nav-item">
+          </NavLink>
+          <NavLink to="/settings" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
             <span className="nav-icon">⚙️</span>
             <span className="nav-label">设置</span>
-          </a>
+          </NavLink>
         </nav>
       </div>
     </BrowserRouter>

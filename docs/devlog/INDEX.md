@@ -14,3 +14,4 @@
 | 2026-05-08 | [全面代码审计与文档对齐](2026-05-08-code-audit.md) | TS零错误验证、DB schema对齐、README更新、残留清理、路线图审计 |
 | 2026-05-08 | [零件照片上传功能](2026-05-08-part-photos.md) | Supabase Storage 照片上传、拍照、预览、列表缩略图、详情大图 |
 | 2026-05-09 | [Bug 修复与文档对齐](2026-05-09-bugfix-docs-align.md) | ImportPage localStorage Key、BomCheckoutPage 操作员硬编码、3份文档不对齐修正 |
+| 2026-05-09 | [队友试用前体验修复](2026-05-09-pre-launch-fixes.md) | 底部导航高亮、仓库筛选独立行、库存不足跳转筛选、PartDetailPage 昵称可见、CSV模板下载、空状态引导、删除确认文案修正、SQL管理README |

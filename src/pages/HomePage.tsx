@@ -66,7 +66,7 @@ export default function HomePage() {
           <div className="stat-num">{loading ? '...' : totalParts}</div>
           <div className="stat-label">零件总数</div>
         </div>
-        <div className="stat-card warning" onClick={() => navigate('/parts')}>
+        <div className="stat-card warning" onClick={() => navigate('/parts?lowStock=true')}>
           <div className="stat-num">{loading ? '...' : lowStockCount}</div>
           <div className="stat-label">⚠️ 库存不足</div>
         </div>
@@ -90,7 +90,7 @@ export default function HomePage() {
         if (topLevelLocs.length === 0) return null;
         const warehouseStats: { loc: Location; total: number; lowStock: number }[] = [];
         for (const topLoc of topLevelLocs) {
-          let total = 0;
+    let total = 0;
           let lowStock = 0;
           for (const p of parts) {
             const ptl = getTopLevelLocation(p.location, allLocations);
@@ -108,7 +108,7 @@ export default function HomePage() {
               <div
                 key={ws.loc.id}
                 className={`stat-card ${ws.lowStock > 0 ? 'warning' : ''}`}
-                onClick={() => navigate(`/parts?warehouse=${ws.loc.id}`)}
+                onClick={() => navigate(`/parts?warehouse=${ws.loc.id}${ws.lowStock > 0 ? '&lowStock=true' : ''}`)}
               >
                 <div className="stat-num" style={{ fontSize: 18 }}>🏢 {ws.loc.label || ws.loc.code}</div>
                 <div className="stat-label">

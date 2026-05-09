@@ -11,6 +11,7 @@ export default function PartsPage() {
   const [allLocations, setAllLocations] = useState<Location[]>([]);
   const [search, setSearch] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState(searchParams.get('warehouse') || '');
+  const lowStockFilter = searchParams.get('lowStock') === 'true';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [configReady, setConfigReady] = useState(true);
@@ -83,6 +84,10 @@ export default function PartsPage() {
       const topLoc = getTopLevelLocation(p.location, allLocations);
       if (!topLoc || topLoc.id !== warehouseFilter) return false;
     }
+    // 低库存筛选（来自首页点击）
+    if (lowStockFilter) {
+      if (!(p.min_quantity != null && p.quantity <= p.min_quantity)) return false;
+    }
     // 搜索筛选
     const s = search.toLowerCase();
     if (!s) return true;
@@ -148,7 +153,7 @@ export default function PartsPage() {
   async function batchDelete() {
     if (selectedIds.size === 0) return;
     const count = selectedIds.size;
-    const confirmed = window.confirm(`确定要删除 ${count} 个零件吗？\n\n此操作不可撤销，将同时删除以下关联数据：\n• 操作日志 (transactions)\n• 自定义字段 (custom_fields)\n• BOM 明细 (bom_items)\n• 采购明细 (purchase_items)\n• 替代组成员 (part_group_members)`);
+    const confirmed = window.confirm(`确定要删除 ${count} 个零件吗？\n\n此操作不可撤销，将同时删除以下关联数据：\n• 操作日志 (transactions)\n• 自定义字段 (custom_fields)\n• BOM 明细 (bom_items)\n• 采购明细 (purchase_items)\n• 零件照片 (Supabase Storage)`);
     if (!confirmed) return;
 
     setBatchDeleting(true);
@@ -366,21 +371,40 @@ export default function PartsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        {topLevelLocations.length > 0 && (
+      </div>
+
+      {/* 仓库筛选 + 低库存标记 */}
+      {topLevelLocations.length > 0 && (
+        <div style={{ padding: '4px 16px 8px', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontSize: 13, color: '#888', whiteSpace: 'nowrap' }}>🏢 仓库</span>
           <select
             value={warehouseFilter}
             onChange={(e) => setWarehouseFilter(e.target.value)}
-            style={{ marginTop: 8 }}
+            style={{ flex: 1, minWidth: 120, height: 36, padding: '0 10px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14, background: '#fff' }}
           >
-            <option value="">🏢 全部仓库</option>
+            <option value="">全部仓库</option>
             {topLevelLocations.map((loc) => (
               <option key={loc.id} value={loc.id}>
-                🏢 {loc.label || loc.code}
+                {loc.label || loc.code}
               </option>
             ))}
           </select>
-        )}
-      </div>
+          {warehouseFilter && (
+            <button
+              onClick={() => setWarehouseFilter('')}
+              style={{ background: 'none', border: 'none', fontSize: 16, color: '#999', cursor: 'pointer', padding: '4px' }}
+              title="清除仓库筛选"
+            >
+              ✕
+            </button>
+          )}
+          {lowStockFilter && (
+            <span style={{ fontSize: 12, color: '#ff6b35', fontWeight: 600, whiteSpace: 'nowrap' }}>
+              ⚠️ 仅显示库存不足
+            </span>
+          )}
+        </div>
+      )}
 
       {error && <div style={{ padding: '8px 16px', color: '#ff6b35', fontSize: 14 }}>{error}</div>}
 
@@ -545,6 +569,26 @@ export default function PartsPage() {
         <div className="empty-state">
           <div className="empty-icon">🔍</div>
           <p>没有找到匹配的零件</p>
+        </div>
+      )}
+
+      {!loading && parts.length === 0 && !search && (
+        <div className="empty-state">
+          <div className="empty-icon">📦</div>
+          <p>还没有任何零件</p>
+          <p style={{ fontSize: 13, color: '#aaa', marginTop: 8 }}>点击右上角「➕ 添加」创建第一个零件</p>
+          <p style={{ fontSize: 13, color: '#aaa', marginTop: 4 }}>或点击「📥 批量导入」从 Excel 导入采购数据</p>
+          <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => navigate('/parts/new')}>
+            ➕ 添加第一个零件
+          </button>
+        </div>
+      )}
+
+      {!loading && parts.length > 0 && filtered.length === 0 && !search && lowStockFilter && (
+        <div className="empty-state">
+          <div className="empty-icon">🎉</div>
+          <p>太棒了！所有零件库存充足</p>
+          <p style={{ fontSize: 13, color: '#aaa', marginTop: 8 }}>没有低于最低库存的零件</p>
         </div>
       )}
 

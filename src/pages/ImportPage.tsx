@@ -374,8 +374,24 @@ export default function ImportPage() {
       {/* 粘贴区域 */}
       <div style={{ padding: '0 16px 16px' }}>
         <p style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>
-          在 Excel 中选中采购数据行（不含表头），Ctrl+C 复制后粘贴到下方：
+          从 Excel 采购申请表选中数据行（不含表头），Ctrl+C 复制后粘贴到下方。
         </p>
+        <button
+          className="btn"
+          style={{ background: '#e8f5e9', color: '#2e7d32', fontSize: 13, marginBottom: 8 }}
+          onClick={() => {
+            const template = '序号\t日期\t名称\t规格\t单价\t数量\t金额\t链接\t备注\n1\t2026-05-09\tM3x12螺丝\tM3*12 12.9级\t0.05\t100\t5.00\thttps://item.taobao.com/xxx\t2026赛季备材';
+            const blob = new Blob(['\uFEFF' + template], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'hamster-import-template.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+        >
+          📥 下载Excel模板
+        </button>
         <textarea
           className="form-textarea"
           style={{ height: 120, fontSize: 13, fontFamily: 'monospace' }}

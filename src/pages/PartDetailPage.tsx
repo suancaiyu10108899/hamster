@@ -246,6 +246,17 @@ export default function PartDetailPage() {
             <h3 style={{ marginBottom: 16 }}>
               {showPanel === 'in' ? '📥 入库' : showPanel === 'out' ? '📤 出库' : '🗑️ 报废'}
             </h3>
+            <div style={{ marginBottom: 12, padding: '8px 12px', background: '#f9f9f9', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 13, color: '#888' }}>操作人：</span>
+              <input
+                className="form-input"
+                style={{ height: 32, fontSize: 14, flex: 1 }}
+                value={getOperator()}
+                onChange={(e) => localStorage.setItem('hamster_operator', e.target.value)}
+                placeholder="设置昵称"
+              />
+              <span style={{ fontSize: 11, color: '#aaa', whiteSpace: 'nowrap' }}>点击修改</span>
+            </div>
             <div className="form-group">
               <label className="form-label">数量 ({part.unit})</label>
               <input

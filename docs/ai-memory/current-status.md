@@ -90,7 +90,21 @@
 5. **CSS 样式补充**：`photo-upload-area`、`photo-preview`、`photo-actions`、`detail-photo`、`part-card-thumb`
 6. **开发日志**：`docs/devlog/2026-05-08-part-photos.md`
 
-## 本次已完成（2026-05-09 Bug 修复：import LS Key + checkout operator）
+## 本次已完成（2026-05-09 队友试用前体验修复）
+
+1. **底部导航高亮**：`App.tsx` 改用 `<NavLink>`，当前页面显示橙色高亮
+2. **仓库筛选 UI 独立行**：`PartsPage.tsx` 搜索栏和仓库筛选分离，使用 flex 布局
+3. **首页"库存不足"点击带筛选**：跳转 `/parts?lowStock=true`，自动过滤低库存零件
+4. **HomePage 仓库统计卡片**：点击带 `&lowStock=true` 参数
+5. **PartsPage 空状态引导**：无零件时有引导文案+快捷按钮；低库存无结果时正向反馈
+6. **ImportPage 下载 Excel 模板**：CSV 模板含 BOM 支持 Excel 正确打开中文
+7. **BomPage 下载 CSV 模板**：含表头+4行示例数据
+8. **PartDetailPage 操作人输入框**：出入库面板顶部显示并可直接编辑昵称
+9. **批量删除确认文案修正**：移除不存在的 `part_group_members`
+10. **SQL 管理文档**：`supabase/README.md` 新建，区分 A/B/C 三种初始化场景
+11. **devlog 更新**：`2026-05-09-pre-launch-fixes.md` + INDEX 索引更新
+
+### 上次已完成（2026-05-09 Bug 修复：import LS Key + checkout operator）
 
 1. **ImportPage localStorage Key 修复**：从硬编码 `'hamster_operator'` 改为常量 `OPERATOR_KEY`
 2. **BomCheckoutPage 操作员读取修复**：从硬编码 `'我'` 改为 `localStorage.getItem(OPERATOR_KEY) || '我'`
@@ -101,10 +115,16 @@
 
 ## 待完成
 
+### ✅ 短期（已完成）
+
+- [x] 队友试用前体验修复（2026-05-09）
+- [x] Git commit + push（待执行）
+
 ### 🔴 短期（本周）
 
 - [ ] 队友试用反馈收集
-- [ ] Git commit + push（本次变更）
+- [ ] 确认 Supabase Storage bucket 公开
+- [ ] 确认 Netlify 生产部署
 
 ### 🟡 中期（P1 剩余 + P2）
 
@@ -140,6 +160,8 @@
 | 数据库迁移执行确认流程 | ✅ | 2026-05-06 建立 |
 | BOM 批量出库 | ✅ | 2026-05-08 完成（含反馈修复） |
 | CSV 导出 | ✅ | 2026-05-07 PartsPage 导出按钮 |
+| 队友试用前体验修复 | ✅ | 2026-05-09 |
+| SQL 迁移管理文档 | ✅ | 2026-05-09 supabase/README.md |
 
 ## 下次会话任务
 
@@ -148,6 +170,7 @@
 3. P2 功能开发：EAV 自定义字段 UI
 4. 技术债务：采购入库改为原子操作（Supabase Edge Function / Database Function）
 5. PWA 离线支持调研
+6. Git commit + push 当前所有变更
 
 ## 2026-05-07 新增：从零教学文档
 

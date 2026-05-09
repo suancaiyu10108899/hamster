@@ -367,6 +367,22 @@ export default function BomPage() {
 
           <div className="form-group">
             <label>粘贴 CSV（必含「名称」和「数量」列，可选「型号」列）</label>
+            <button
+              className="btn"
+              style={{ background: '#e8f5e9', color: '#2e7d32', fontSize: 13, marginBottom: 8 }}
+              onClick={() => {
+                const template = '名称,型号,数量\nM3x12螺丝,M3*12 12.9级,20\nMG90S舵机,360度,2\n杜邦线,母对母20cm,10\n同步带,GT2-6mm闭口-200mm,4';
+                const blob = new Blob(['\uFEFF' + template], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'hamster-bom-template.csv';
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
+              📥 下载CSV模板
+            </button>
             <div className="paste-row">
               <textarea
                 className="input textarea"
